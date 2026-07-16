@@ -1,4 +1,4 @@
-package io.github.filipchyla.shopapi.shared.exception;
+package io.github.filipchyla.shopapi.auth.exception;
 
 public class EmailTakenException extends RuntimeException {
     public EmailTakenException(String message) {
