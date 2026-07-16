@@ -1,4 +1,6 @@
-package io.github.filipchyla.shopapi.user;
+package io.github.filipchyla.shopapi.user.repository;
+
+import io.github.filipchyla.shopapi.user.User;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

@@ -1,8 +1,9 @@
-package io.github.filipchyla.shopapi.user;
+package io.github.filipchyla.shopapi.user.controller;
 
 import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
 import io.github.filipchyla.shopapi.user.dto.UserResponse;
+import io.github.filipchyla.shopapi.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
