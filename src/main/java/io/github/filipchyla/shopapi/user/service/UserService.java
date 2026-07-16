@@ -1,9 +1,12 @@
-package io.github.filipchyla.shopapi.user;
+package io.github.filipchyla.shopapi.user.service;
 
-import io.github.filipchyla.shopapi.shared.exception.EmailTakenException;
+import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
+import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
 import io.github.filipchyla.shopapi.user.dto.UserResponse;
 import io.github.filipchyla.shopapi.user.exception.UserNotFoundException;
+import io.github.filipchyla.shopapi.user.mapper.UserMapper;
+import io.github.filipchyla.shopapi.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

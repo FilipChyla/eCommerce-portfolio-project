@@ -5,7 +5,7 @@ import io.github.filipchyla.shopapi.auth.dto.AuthenticationResponse;
 import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
 import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
-import io.github.filipchyla.shopapi.user.UserService;
+import io.github.filipchyla.shopapi.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

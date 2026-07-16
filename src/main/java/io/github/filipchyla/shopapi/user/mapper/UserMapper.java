@@ -1,5 +1,6 @@
-package io.github.filipchyla.shopapi.user;
+package io.github.filipchyla.shopapi.user.mapper;
 
+import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
 import io.github.filipchyla.shopapi.user.dto.UserResponse;
 import org.mapstruct.BeanMapping;
