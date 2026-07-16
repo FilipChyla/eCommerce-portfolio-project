@@ -1,7 +1,7 @@
 package io.github.filipchyla.shopapi.shared.handler;
 
 import io.github.filipchyla.shopapi.shared.dto.ErrorResponse;
-import io.github.filipchyla.shopapi.shared.exception.EmailTakenException;
+import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
 import io.github.filipchyla.shopapi.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
