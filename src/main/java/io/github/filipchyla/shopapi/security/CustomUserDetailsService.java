@@ -1,5 +1,7 @@
-package io.github.filipchyla.shopapi.user;
+package io.github.filipchyla.shopapi.security;
 
+import io.github.filipchyla.shopapi.user.User;
+import io.github.filipchyla.shopapi.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
