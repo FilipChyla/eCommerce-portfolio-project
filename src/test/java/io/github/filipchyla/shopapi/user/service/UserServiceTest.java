@@ -1,0 +1,104 @@
+package io.github.filipchyla.shopapi.user.service;
+
+import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
+import io.github.filipchyla.shopapi.user.User;
+import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
+import io.github.filipchyla.shopapi.user.dto.UserResponse;
+import io.github.filipchyla.shopapi.user.exception.UserNotFoundException;
+import io.github.filipchyla.shopapi.user.mapper.UserMapper;
+import io.github.filipchyla.shopapi.user.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private UserMapper userMapper;
+
+    @InjectMocks
+    private UserService userService;
+
+    public static final String EMAIL = "test@example.com";
+
+    @Test
+    void createUser_ShouldSaveUser_WhenEmailIsNotTaken() {
+        // Given
+        String passwordHash = "hashed_password";
+
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        User result = userService.createUser(EMAIL, passwordHash);
+
+        // Then
+        assertThat(result.getEmail()).isEqualTo(EMAIL);
+        assertThat(result.getPasswordHash()).isEqualTo(passwordHash);
+        verify(userRepository).existsByEmail(EMAIL);
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void createUser_ShouldThrowEmailTakenException_WhenEmailIsTaken() {
+        // Given
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> userService.createUser(EMAIL, "password"))
+                .isInstanceOf(EmailTakenException.class);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void patchUser_ShouldUpdateUser_WhenUserExists() {
+        // Given
+        User user = new User();
+        UUID userId = UUID.randomUUID();
+        user.setId(userId);
+        user.setEmail(EMAIL);
+
+        PatchUserRequest request = new PatchUserRequest("John", "Doe", "+48123456789");
+        UserResponse response = new UserResponse(userId, user.getEmail(), "John", "Doe", "+48123456789", LocalDateTime.now());
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userMapper.toResponse(user)).thenReturn(response);
+
+        // When
+        UserResponse result = userService.patchUser(request, userId);
+
+        // Then
+        assertThat(result).isEqualTo(response);
+        verify(userRepository).findById(userId);
+        verify(userMapper).updateFromPatchRequest(request, user);
+        verify(userMapper).toResponse(user);
+    }
+
+    @Test
+    void patchUser_ShouldThrowUserNotFoundException_WhenUserDoesNotExist() {
+        // Given
+        UUID userId = UUID.randomUUID();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> userService.patchUser(mock(PatchUserRequest.class), userId))
+                .isInstanceOf(UserNotFoundException.class);
+        verify(userMapper, never()).updateFromPatchRequest(any(), any());
+    }
+
+}
