@@ -5,6 +5,7 @@ import io.github.filipchyla.shopapi.auth.dto.AuthenticationResponse;
 import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
 import io.github.filipchyla.shopapi.user.User;
+import io.github.filipchyla.shopapi.user.dto.ChangePasswordRequest;
 import io.github.filipchyla.shopapi.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +18,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -112,5 +115,47 @@ class AuthenticationServiceTest {
                 .isInstanceOf(BadCredentialsException.class);
         verify(userDetailsService, never()).loadUserByUsername(any());
         verify(jwtService, never()).generateToken(any());
+    }
+
+    @Test
+    void changePassword_ShouldChangePassword_WhenCurrentPasswordIsCorrect() {
+        // Given
+        String newRawPassword = "newPassword";
+        ChangePasswordRequest request = new ChangePasswordRequest(RAW_PASSWORD, newRawPassword);
+
+        User user = new User();
+        UUID userId = UUID.randomUUID();
+        user.setId(userId);
+        user.setPasswordHash(ENCODED_PASSWORD);
+
+        when(userService.getUserEntity(userId)).thenReturn(user);
+        when(passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())).thenReturn(true);
+        when(passwordEncoder.encode(newRawPassword)).thenReturn("NewPasswordHash");
+
+        // When
+        authenticationService.changePassword(userId, request);
+
+        // Then
+        assertThat(user.getPasswordHash()).isEqualTo("NewPasswordHash");
+        verify(passwordEncoder).encode(request.newPassword());
+    }
+
+    @Test
+    void changePassword_ShouldThrowException_WhenCurrentPasswordIsIncorrect() {
+        // Given
+        String newRawPassword = "newPassword";
+        ChangePasswordRequest request = new ChangePasswordRequest(RAW_PASSWORD, newRawPassword);
+
+        User user = new User();
+        UUID userId = UUID.randomUUID();
+        user.setId(userId);
+        user.setPasswordHash(ENCODED_PASSWORD);
+
+        when(userService.getUserEntity(userId)).thenReturn(user);
+        when(passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())).thenReturn(false);
+
+        // When & Then
+        assertThatThrownBy(()->authenticationService.changePassword(userId, request)).isInstanceOf(BadCredentialsException.class);
+        assertThat(user.getPasswordHash()).isEqualTo(ENCODED_PASSWORD);
     }
 }
