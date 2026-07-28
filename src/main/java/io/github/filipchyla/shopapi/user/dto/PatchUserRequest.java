@@ -10,7 +10,7 @@ public record PatchUserRequest(
         String lastName,
         @Size(max = 20)
         @Pattern(
-                regexp = "^\\+?[1-9]\\d{7,14}$",
+                regexp = "^$|^\\+?[1-9]\\d{7,14}$",
                 message = "Phone number must be a valid international number"
         )
         String phone
