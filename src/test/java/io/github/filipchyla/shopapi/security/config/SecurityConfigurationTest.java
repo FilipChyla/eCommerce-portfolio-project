@@ -1,5 +1,6 @@
 package io.github.filipchyla.shopapi.security.config;
 
+import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.auth.service.JwtService;
 import io.github.filipchyla.shopapi.user.controller.UserController;
 import io.github.filipchyla.shopapi.user.service.UserService;
@@ -34,6 +35,9 @@ public class SecurityConfigurationTest {
     private UserService userService;
 
     @MockitoBean
+    AuthenticationService authenticationService;
+
+    @MockitoBean
     private UserDetailsService userDetailsService;
 
     @ParameterizedTest
@@ -46,7 +50,10 @@ public class SecurityConfigurationTest {
 
     static Stream<Arguments> protectedEndpoints() {
         return Stream.of(
-                Arguments.of(HttpMethod.PATCH, "/api/v1/user/me")
+                Arguments.of(HttpMethod.PATCH, "/api/v1/user/me"),
+                Arguments.of(HttpMethod.PATCH, "/api/v1/user/me/password"),
+                Arguments.of(HttpMethod.DELETE, "/api/v1/user/me"),
+                Arguments.of(HttpMethod.GET, "/api/v1/user/me")
         );
     }
 }
