@@ -22,6 +22,8 @@ The project is being developed as a backend portfolio project with a focus on pr
 ### User Management
 
 * Update user profile information
+* Password change
+* Account deletion
 * Input validation
 * Global exception handling
 
@@ -45,7 +47,7 @@ The project is being developed as a backend portfolio project with a focus on pr
 # Tech Stack
 
 | Category           | Technology                  |
-| ------------------ | --------------------------- |
+|--------------------|-----------------------------|
 | Language           | Java 21                     |
 | Framework          | Spring Boot                 |
 | Build Tool         | Maven                       |
@@ -53,6 +55,7 @@ The project is being developed as a backend portfolio project with a focus on pr
 | ORM                | Spring Data JPA / Hibernate |
 | Security           | Spring Security + JWT       |
 | Validation         | Jakarta Validation          |
+| Testing            | JUnit                       |
 | Database Migration | Flyway                      |
 | Object Mapping     | MapStruct                   |
 | Containerization   | Docker & Docker Compose     |
@@ -167,16 +170,19 @@ The API is organized around RESTful endpoints.
 
 ## Authentication
 
-| Method | Endpoint             | Description         | Authentication |
-| ------ | -------------------- | ------------------- | -------------- |
-| `POST` | `/api/auth/register` | Register a new user | Not required   |
-| `POST` | `/api/auth/login`    | Authenticate a user | Not required   |
+| Method | Endpoint                   | Description         | Authentication |
+| ------ |----------------------------| ------------------- | -------------- |
+| `POST` | `/api/v1/auth/register`    | Register a new user | Not required   |
+| `POST` | `/api/v1/auth/authnticate` | Authenticate a user | Not required   |
 
 ## User Management
 
-| Method  | Endpoint        | Description                             | Authentication |
-| ------- | --------------- | --------------------------------------- | -------------- |
-| `PATCH` | `/api/users/me` | Update the authenticated user's profile | Required       |
+| Method   | Endpoint                   | Description                                   | Authentication |
+|----------|----------------------------|-----------------------------------------------|----------------|
+| `GET`    | `/api/v1/user/me`          | Get authenticated user's profile informations | Required       |
+| `PATCH`  | `/api/v1/user/me`          | Update the authenticated user's profile       | Required       |
+| `PATCH`  | `/api/v1/user/me/password` | Change authenticated user's password          | Required       |
+| `DELETE` | `/api/v1/user/me`          | Disable authenticated user's account          | Required       |
 
 > The API documentation will be expanded as new features are implemented.
 
@@ -194,13 +200,13 @@ The API is organized around RESTful endpoints.
 * [x] Global exception handling
 * [x] Flyway database migrations
 * [x] Docker development environment
+* [x] Testing
+* [x] CI pipeline
 
 
 ## In Progress
 
-* [ ] Testing
 * [ ] Role-based authorization
-* [ ] CI pipeline
 * [ ] Refresh tokens
 * [ ] Product module
 * [ ] API documentation
