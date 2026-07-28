@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -65,6 +66,44 @@ class UserServiceTest {
     }
 
     @Test
+    void getUser_ShouldReturnUser_WhenUserExists() {
+        // Given
+        User user = new User();
+        UUID userId = UUID.randomUUID();
+        user.setId(userId);
+
+        UserResponse response = new UserResponse(userId, user.getEmail(), "John", "Doe", "+48123456789", LocalDateTime.now());
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userMapper.toResponse(user)).thenReturn(response);
+
+        // When
+        UserResponse result = userService.getUser(userId);
+
+        // Then
+        assertThat(result).isEqualTo(response);
+        verify(userRepository).findById(userId);
+        verify(userMapper).toResponse(user);
+    }
+
+    @Test
+    void getUserEntity_ShouldReturnUserEntity_WhenUserExists() {
+        // Given
+        User user = new User();
+        UUID userId = UUID.randomUUID();
+        user.setId(userId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // When
+        User foundUser = userService.getUserEntity(userId);
+
+        // Then
+        assertThat(foundUser).isEqualTo(user);
+        verify(userRepository).findById(userId);
+    }
+
+    @Test
     void patchUser_ShouldUpdateUser_WhenUserExists() {
         // Given
         User user = new User();
@@ -101,4 +140,19 @@ class UserServiceTest {
         verify(userMapper, never()).updateFromPatchRequest(any(), any());
     }
 
+    @Test
+    void deactivateUser_ShouldSetEnabledToFalse_WhenUserExists() {
+        // Given
+        User user = new User();
+        UUID userId = UUID.randomUUID();
+        user.setEnabled(true);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // When
+        userService.deactivateUser(userId);
+
+        // Then
+        assertFalse(user.isEnabled());
+    }
 }
