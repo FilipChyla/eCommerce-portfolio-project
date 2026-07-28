@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -49,7 +48,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
                 if (!userDetails.isEnabled()) {
-                    throw new DisabledException("Account is deactivated");
+                    sendResponse(response, HttpServletResponse.SC_FORBIDDEN,"Account is deactivated");
+                    return;
                 }
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
@@ -67,14 +67,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException e) {
-            sendUnauthorized(response, "Token expired");
+            sendResponse(response, HttpServletResponse.SC_UNAUTHORIZED,"Token expired");
         } catch (JwtException e) {
-            sendUnauthorized(response, "Invalid token");
+            sendResponse(response, HttpServletResponse.SC_UNAUTHORIZED,"Invalid token");
         }
     }
 
-    private void sendUnauthorized(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    private void sendResponse(HttpServletResponse response, int statusCode, String message) throws IOException {
+        response.setStatus(statusCode);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write("{\"error\": \"" + message + "\"}");
     }

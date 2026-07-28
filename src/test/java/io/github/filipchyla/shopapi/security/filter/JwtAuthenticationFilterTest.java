@@ -26,10 +26,7 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
@@ -90,13 +87,35 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void doFilterInternal_ShouldSetAuthentication_WhenTokenIsValid() throws Exception {
+    void doFilterInternal_ShouldReturnForbidden_WhenUserIsDisabled() throws Exception {
         // Given
-        UserDetails userDetails = mockUser();
+        UserDetails userDetails = mock(UserDetails.class);
         request.addHeader("Authorization", BEARER);
 
         when(jwtService.extractUsername(TOKEN)).thenReturn(EMAIL);
         when(userDetailsService.loadUserByUsername(EMAIL)).thenReturn(userDetails);
+
+        // When
+        jwtFilter.doFilterInternal(request, response, filterChain);
+
+        // Then
+        verify(filterChain, never()).doFilter(request, response);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(response.getContentType()).contains("application/json");
+        assertThat(response.getContentAsString()).contains("Account is deactivated");
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void doFilterInternal_ShouldSetAuthentication_WhenTokenIsValid() throws Exception {
+        // Given
+        UserDetails userDetails = mock(UserDetails.class);
+        request.addHeader("Authorization", BEARER);
+
+        when(jwtService.extractUsername(TOKEN)).thenReturn(EMAIL);
+        when(userDetailsService.loadUserByUsername(EMAIL)).thenReturn(userDetails);
+        when(userDetails.isEnabled()).thenReturn(true);
         when(jwtService.isTokenValid(TOKEN, userDetails)).thenReturn(true);
 
         // When
@@ -204,11 +223,5 @@ class JwtAuthenticationFilterTest {
         assertThat(response.getContentAsString()).contains("Invalid token");
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(userDetailsService, never()).loadUserByUsername(any());
-    }
-
-    private UserDetails mockUser() {
-        UserDetails userDetails = org.mockito.Mockito.mock(UserDetails.class);
-        when(userDetails.getAuthorities()).thenReturn(Collections.emptyList());
-        return userDetails;
     }
 }
