@@ -15,7 +15,8 @@ The project is being developed as a backend portfolio project with a focus on pr
 * User registration
 * User login
 * JWT-based authentication
-* Stateless authentication
+* Refresh tokens
+* Stateless JWT-based access token authentication
 * Secure password hashing
 * Protected API endpoints
 
@@ -30,6 +31,7 @@ The project is being developed as a backend portfolio project with a focus on pr
 ### Database & Persistence
 
 * PostgreSQL database
+* Redis
 * Spring Data JPA
 * Hibernate
 * Flyway database migrations
@@ -51,11 +53,11 @@ The project is being developed as a backend portfolio project with a focus on pr
 | Language           | Java 21                     |
 | Framework          | Spring Boot                 |
 | Build Tool         | Maven                       |
-| Database           | PostgreSQL                  |
+| Database           | PostgreSQL and Redis        |
 | ORM                | Spring Data JPA / Hibernate |
 | Security           | Spring Security + JWT       |
 | Validation         | Jakarta Validation          |
-| Testing            | JUnit                       |
+| Testing            | JUnit and testcontainers    |
 | Database Migration | Flyway                      |
 | Object Mapping     | MapStruct                   |
 | Containerization   | Docker & Docker Compose     |
@@ -87,6 +89,31 @@ src/main/java/io/github/filipchyla/shopapi
 ```
 
 This structure helps keep related functionality together and allows the application to grow without creating a large collection of unrelated global layers.
+
+---
+
+# Security
+
+The application uses Spring Security with JWT-based authentication.
+
+### Access Tokens
+
+* Short-lived JWT access tokens
+* Access tokens are not stored server-side
+* Access tokens are sent using the `Authorization: Bearer <token>` header
+
+### Refresh Tokens
+
+* Refresh tokens are stored server-side in Redis
+* Refresh tokens are delivered using secure HttpOnly cookies
+* Refresh token rotation is used
+* Revoked refresh tokens cannot be reused
+* Refresh token sessions are limited per user
+
+### Password Security
+
+* Passwords are hashed using a strong password hashing algorithm
+* Raw passwords are never stored in the database
 
 ---
 
@@ -122,8 +149,11 @@ POSTGRES_PASSWORD=your_password
 
 DB_PORT=5432
 
-JWT_SECRET_KEY=a_very_long_random_string_for_signing_tokens
+JWT_SECRET=a_very_long_random_string_for_signing_tokens
 JWT_EXPIRATION_TIME=3600000
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
 ```
 
 ---
@@ -170,10 +200,13 @@ The API is organized around RESTful endpoints.
 
 ## Authentication
 
-| Method | Endpoint                   | Description         | Authentication |
-| ------ |----------------------------| ------------------- | -------------- |
-| `POST` | `/api/v1/auth/register`    | Register a new user | Not required   |
-| `POST` | `/api/v1/auth/authnticate` | Authenticate a user | Not required   |
+| Method | Endpoint                    | Description                         | Authentication          |
+| ------ |---------------------------- | ----------------------------------- | ----------------------- |
+| `POST` | `/api/v1/auth/register`     | Register a new user                 | Not required            |
+| `POST` | `/api/v1/auth/authenticate` | Authenticate a user                 | Not required            |
+| `POST` | `/api/v1/auth/refresh`      | Rotate refresh token                | Refresh token required  |
+| `POST` | `/api/v1/auth/logout`       | Invalidate given refresh token      | Refresh token required  |
+| `POST` | `/api/v1/auth/logout-all`   | Invalidate all user's refresh token | Required                |
 
 ## User Management
 
@@ -202,12 +235,11 @@ The API is organized around RESTful endpoints.
 * [x] Docker development environment
 * [x] Testing
 * [x] CI pipeline
-
+* [x] Refresh tokens
 
 ## In Progress
 
 * [ ] Role-based authorization
-* [ ] Refresh tokens
 * [ ] Product module
 * [ ] API documentation
 
@@ -232,7 +264,7 @@ This project intentionally uses several patterns and technologies commonly found
 * Service layer
 * Spring Data JPA
 * Flyway database migrations
-* Stateless JWT authentication
+* Stateless JWT-based access token authentication
 * Global exception handling
 * Jakarta Bean Validation
 * Docker-based development environment
