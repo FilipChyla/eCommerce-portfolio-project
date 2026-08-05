@@ -1,4 +1,9 @@
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
   application:
     name: shop-api
   config:
@@ -25,3 +30,9 @@ spring:
 jwt:
   secret-key: ${JWT_SECRET}
   expiration-time: ${JWT_EXPIRATION_TIME}
+
+app:
+  refresh-token:
+    expiration-ms: 1209600000
+    max-sessions-per-user: 10
+    cookie-name: refreshToken
