@@ -1,9 +1,9 @@
 package io.github.filipchyla.shopapi.auth.service;
 
 import io.github.filipchyla.shopapi.auth.dto.AuthenticationRequest;
-import io.github.filipchyla.shopapi.auth.dto.AuthenticationResponse;
 import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
+import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.ChangePasswordRequest;
 import io.github.filipchyla.shopapi.user.service.UserService;
@@ -15,8 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.UUID;
@@ -28,11 +27,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTest {
-
-    @Mock
-    private JwtService jwtService;
-    @Mock
-    private UserDetailsService userDetailsService;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
@@ -46,27 +40,27 @@ class AuthenticationServiceTest {
     private static final String EMAIL = "test@example.com";
     private static final String RAW_PASSWORD = "Password123";
     private static final String ENCODED_PASSWORD = "encodedPassword";
-    private static final String TOKEN = "jwt_token";
 
     @Test
-    void register_ShouldReturnResponseWithToken_WhenSuccessful() {
+    void register_ShouldReturnPrincipal_WhenSuccessful() {
         // Given
         RegisterRequest request = new RegisterRequest(EMAIL, RAW_PASSWORD);
         User user = new User();
         user.setEmail(request.email());
-
+        UserPrincipal userPrincipal = new UserPrincipal(user);
+        Authentication authentication = mock(Authentication.class);
         when(passwordEncoder.encode(request.password())).thenReturn(ENCODED_PASSWORD);
-        when(userService.createUser(request.email(), ENCODED_PASSWORD)).thenReturn(user);
-        when(jwtService.generateToken(any())).thenReturn(TOKEN);
+        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userPrincipal);
 
         // When
-        AuthenticationResponse response = authenticationService.register(request);
+        UserPrincipal response = authenticationService.register(request);
 
         // Then
-        assertThat(response.token()).isEqualTo(TOKEN);
+        assertThat(response).isEqualTo(userPrincipal);
         verify(passwordEncoder).encode(request.password());
         verify(userService).createUser(request.email(), ENCODED_PASSWORD);
-        verify(jwtService).generateToken(any());
+
     }
 
     @Test
@@ -81,26 +75,24 @@ class AuthenticationServiceTest {
         assertThatThrownBy(() -> authenticationService.register(request)).isInstanceOf(EmailTakenException.class);
         verify(passwordEncoder).encode(request.password());
         verify(userService).createUser(request.email(), ENCODED_PASSWORD);
-        verify(jwtService, never()).generateToken(any());
     }
 
     @Test
-    void authenticate_ShouldReturnResponseWithToken_WhenCredentialsAreValid() {
+    void authenticate_ShouldReturnAuthenticatedUser_WhenCredentialsAreValid() {
         // Given
         AuthenticationRequest request = new AuthenticationRequest(EMAIL, RAW_PASSWORD);
-        UserDetails userDetails = mock(UserDetails.class);
+        UserPrincipal user = mock(UserPrincipal.class);
+        Authentication authentication = mock(Authentication.class);
 
-        when(userDetailsService.loadUserByUsername(request.email())).thenReturn(userDetails);
-        when(jwtService.generateToken(userDetails)).thenReturn(TOKEN);
+        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(user);
 
         // When
-        AuthenticationResponse response = authenticationService.authenticate(request);
+        UserPrincipal principal = authenticationService.authenticate(request);
 
         // Then
-        assertThat(response.token()).isEqualTo(TOKEN);
+        assertThat(principal).isEqualTo(user);
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userDetailsService).loadUserByUsername(request.email());
-        verify(jwtService).generateToken(userDetails);
     }
 
     @Test
@@ -113,8 +105,6 @@ class AuthenticationServiceTest {
         // When & Then
         assertThatThrownBy(() -> authenticationService.authenticate(request))
                 .isInstanceOf(BadCredentialsException.class);
-        verify(userDetailsService, never()).loadUserByUsername(any());
-        verify(jwtService, never()).generateToken(any());
     }
 
     @Test
