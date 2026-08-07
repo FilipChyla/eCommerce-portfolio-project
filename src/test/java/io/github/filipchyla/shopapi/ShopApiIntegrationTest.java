@@ -1,6 +1,9 @@
 package io.github.filipchyla.shopapi;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.filipchyla.shopapi.role.Role;
+import io.github.filipchyla.shopapi.role.RoleName;
+import io.github.filipchyla.shopapi.role.RoleRepository;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.ChangePasswordRequest;
@@ -42,13 +45,14 @@ class ShopApiIntegrationTest {
     private UserRepository userRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RoleRepository roleRepository;
 
     private static final String EMAIL = "integration@example.com";
     private static final String PASSWORD = "Password123!";
     private static final String FIRSTNAME = "Integration";
     private static final String LASTNAME = "User";
     private static final String PHONE = "+48987654321";
-
 
     @BeforeEach
     void setUp() {
@@ -61,6 +65,9 @@ class ShopApiIntegrationTest {
         user.setLastName(LASTNAME);
         user.setPhone(PHONE);
         user.setEnabled(true);
+
+        Role userRole = roleRepository.findByName(RoleName.USER).orElseThrow();
+        user.setRole(userRole);
 
         user = userRepository.save(user);
 

@@ -1,5 +1,6 @@
 package io.github.filipchyla.shopapi.user;
 
+import io.github.filipchyla.shopapi.role.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
@@ -32,6 +33,10 @@ public class User {
 
     @Column(nullable = false)
     private String passwordHash;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

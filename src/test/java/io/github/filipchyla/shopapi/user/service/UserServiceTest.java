@@ -1,6 +1,9 @@
 package io.github.filipchyla.shopapi.user.service;
 
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
+import io.github.filipchyla.shopapi.role.Role;
+import io.github.filipchyla.shopapi.role.RoleName;
+import io.github.filipchyla.shopapi.role.RoleRepository;
 import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
 import io.github.filipchyla.shopapi.user.dto.UserResponse;
@@ -27,9 +30,10 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private UserMapper userMapper;
+    @Mock
+    private RoleRepository roleRepository;
 
     @InjectMocks
     private UserService userService;
@@ -43,6 +47,7 @@ class UserServiceTest {
 
         when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roleRepository.findByName(RoleName.USER)).thenReturn(Optional.of(new Role()));
 
         // When
         User result = userService.createUser(EMAIL, passwordHash);
