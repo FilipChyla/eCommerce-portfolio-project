@@ -16,7 +16,7 @@ The project is being developed as a backend portfolio project with a focus on pr
 * User login
 * JWT-based authentication
 * Refresh tokens
-* Stateless JWT-based access token authentication
+* Role-based authorization (USER, ADMIN)
 * Secure password hashing
 * Protected API endpoints
 
@@ -236,10 +236,11 @@ The API is organized around RESTful endpoints.
 * [x] Testing
 * [x] CI pipeline
 * [x] Refresh tokens
+* [x] Role-based authorization
 
 ## In Progress
 
-* [ ] Role-based authorization
+* [ ] Rate limiting
 * [ ] Product module
 * [ ] API documentation
 
@@ -249,7 +250,6 @@ The API is organized around RESTful endpoints.
 * [ ] Orders
 * [ ] Payment integration
 * [ ] Product search
-* [ ] Rate limiting
 * [ ] Shipping integration
 
 ---
