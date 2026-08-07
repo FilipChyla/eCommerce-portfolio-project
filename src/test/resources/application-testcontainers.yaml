@@ -6,11 +6,6 @@ spring:
       hibernate:
         format_sql: true
 
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-
 app:
   refresh-token:
     expiration-ms: 1209600000

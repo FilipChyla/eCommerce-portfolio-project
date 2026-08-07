@@ -37,8 +37,8 @@ class AuthControllerIntegrationTest {
     private MockMvc mockMvc;
 
     private static final String LOGIN_BODY = """
-            {"email":"test@example.com","password":"correct-password"}
-        """;
+                {"email":"test@example.com","password":"correct-password"}
+            """;
 
     @Container
     static GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine")
@@ -62,7 +62,7 @@ class AuthControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        userRepository.deleteAll();
+        userRepository.deleteAllInBatch();
 
         User user = new User();
         user.setEmail("test@example.com");
@@ -77,8 +77,8 @@ class AuthControllerIntegrationTest {
     @Test
     void register_SetsRefreshCookieAndReturnsAccessToken_WhenCredentialsAreCorrect() throws Exception {
         String registerBody = """
-            {"email":"test@register.com","password":"StrongPassword123!"}
-        """;
+                    {"email":"test@register.com","password":"StrongPassword123!"}
+                """;
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -92,8 +92,8 @@ class AuthControllerIntegrationTest {
     @Test
     void register_ShouldReturnBadCredentials_WhenCredentialsAreIncorrect() throws Exception {
         String registerBody = """
-            {"email":"bademail","password":"pass"}
-        """;
+                    {"email":"bademail","password":"pass"}
+                """;
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -106,12 +106,12 @@ class AuthControllerIntegrationTest {
     @Test
     void register_ShouldReturnConflict_WhenEmailAlreadyUsed() throws Exception {
         String registerBody = """
-            {"email":"test@register.com","password":"StrongPassword123!"}
-        """;
+                    {"email":"test@register.com","password":"StrongPassword123!"}
+                """;
 
         mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registerBody));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(registerBody));
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -135,8 +135,8 @@ class AuthControllerIntegrationTest {
     @Test
     void login_ShouldReturnUnauthorized_WhenCredentialsAreIncorrect() throws Exception {
         String loginBody = """
-            {"email":"bademail","password":"pass"}
-        """;
+                    {"email":"bademail","password":"pass"}
+                """;
         mockMvc.perform(post("/api/v1/auth/authenticate")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginBody))

@@ -34,7 +34,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test", "h2"})
 @Transactional
 class ShopApiIntegrationTest {
-
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -53,7 +52,7 @@ class ShopApiIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        userRepository.deleteAll();
+        userRepository.deleteAllInBatch();
 
         User user = new User();
         user.setEmail(EMAIL);
