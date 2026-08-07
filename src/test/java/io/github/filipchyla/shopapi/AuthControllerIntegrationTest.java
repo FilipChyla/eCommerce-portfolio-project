@@ -1,5 +1,8 @@
 package io.github.filipchyla.shopapi;
 
+import io.github.filipchyla.shopapi.role.Role;
+import io.github.filipchyla.shopapi.role.RoleName;
+import io.github.filipchyla.shopapi.role.RoleRepository;
 import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
@@ -29,6 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test", "testcontainers"})
 @AutoConfigureMockMvc
 class AuthControllerIntegrationTest {
+    @Autowired
+    private RoleRepository roleRepository;
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -70,6 +75,9 @@ class AuthControllerIntegrationTest {
         user.setFirstName("Test");
         user.setLastName("User");
         user.setEnabled(true);
+
+        Role userRole = roleRepository.findByName(RoleName.USER).orElseThrow();
+        user.setRole(userRole);
 
         userRepository.save(user);
     }

@@ -1,6 +1,9 @@
 package io.github.filipchyla.shopapi.user.service;
 
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
+import io.github.filipchyla.shopapi.role.Role;
+import io.github.filipchyla.shopapi.role.RoleName;
+import io.github.filipchyla.shopapi.role.RoleRepository;
 import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
 import io.github.filipchyla.shopapi.user.dto.UserResponse;
@@ -19,7 +22,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final RoleRepository roleRepository;
 
+    @Transactional
     public User createUser(String email, String passwordHash) {
         if (userRepository.existsByEmail(email)) {
             throw new EmailTakenException(email);
@@ -27,16 +32,24 @@ public class UserService {
         User user = new User();
         user.setEmail(email);
         user.setPasswordHash(passwordHash);
+
+        Role userRole = roleRepository.findByName(RoleName.USER)
+                .orElseThrow(() -> new IllegalStateException("USER role not found"));
+
+        user.setRole(userRole);
+
         return userRepository.save(user);
     }
 
     public UserResponse getUser(UUID userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
         return userMapper.toResponse(user);
     }
 
-    public User getUserEntity(UUID userId){
-        return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+    public User getUserEntity(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
     }
 
     @Transactional
@@ -50,7 +63,8 @@ public class UserService {
 
     @Transactional
     public void deactivateUser(UUID userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
         user.setEnabled(false);
     }
 }
