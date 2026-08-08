@@ -237,10 +237,10 @@ The API is organized around RESTful endpoints.
 * [x] CI pipeline
 * [x] Refresh tokens
 * [x] Role-based authorization
+* [x] Rate limiting
 
 ## In Progress
 
-* [ ] Rate limiting
 * [ ] Product module
 * [ ] API documentation
 
@@ -270,7 +270,7 @@ This project intentionally uses several patterns and technologies commonly found
 * Docker-based development environment
 * Automated testing
 
-The goal is not to build the smallest possible application, but to gradually develop a realistic backend system while documenting the architectural and technical decisions made during development.
+The goal is to gradually develop a realistic backend system while documenting the architectural and technical decisions made during development.
 
 ---
 
