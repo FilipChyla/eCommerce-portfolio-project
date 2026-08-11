@@ -8,6 +8,7 @@ import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.auth.service.JwtService;
 import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
+import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
 import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.service.UserService;
 import jakarta.validation.Valid;
@@ -79,7 +80,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
+    public ResponseEntity<MessageResponse> logout(
             @CookieValue(name = "${app.refresh-token.cookie-name}", required = false) String rawRefreshToken) {
 
         if (rawRefreshToken != null) {
@@ -87,15 +88,15 @@ public class AuthenticationController {
         }
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpired().toString())
-                .build();
+                .body(new MessageResponse("User logged out successfully"));
     }
 
     @PostMapping("/logout-all")
-    public ResponseEntity<Void> logoutAll(@AuthenticationPrincipal UserPrincipal principal) {
+    public ResponseEntity<MessageResponse> logoutAll(@AuthenticationPrincipal UserPrincipal principal) {
         refreshTokenService.revokeAllForUser(principal.user().getId().toString());
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpired().toString())
-                .build();
+                .body(new MessageResponse("User logged out from all devices successfully"));
     }
 
     private UserPrincipal getPrincipalFromToken(String newRefreshToken) {
