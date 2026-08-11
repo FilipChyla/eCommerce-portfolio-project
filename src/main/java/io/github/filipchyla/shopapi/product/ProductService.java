@@ -1,0 +1,38 @@
+package io.github.filipchyla.shopapi.product;
+
+import io.github.filipchyla.shopapi.product.category.Category;
+import io.github.filipchyla.shopapi.product.category.CategoryService;
+import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class ProductService {
+    private final ProductRepository productRepository;
+    private final CategoryService categoryService;
+
+    public Product addProduct(CreateProductRequest newProduct) {
+        Product product = new Product();
+        product.setName(newProduct.name());
+        product.setDescription(newProduct.description());
+        product.setPrice(newProduct.price());
+        product.setStockQuantity(newProduct.stockQuantity());
+
+        Category category = categoryService.getCategoryById(newProduct.categoryId());
+
+        product.setCategory(category);
+
+        return productRepository.save(product);
+    }
+
+    public void deleteProduct(UUID id) {
+        productRepository.deleteById(id);
+    }
+
+    public Product getProductById(UUID id) {
+        return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
+    }
+}
