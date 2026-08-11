@@ -13,20 +13,30 @@ bucket4j:
 
     - id: auth-tokens
       cache-name: rate-limit-auth-tokens
-      url: /api/v1/auth/(refresh|logout|logout-all)
+      url: /api/v1/auth/(logout|logout-all)
       rate-limits:
-        - cache-key: "@securityUtils.currentUserId()"
+        - cache-key: "getRemoteAddr()"
           bandwidths:
             - capacity: 10
               time: 1
               unit: hours
+
+    - id: auth-refresh
+      cache-name: rate-limit-refresh
+      url: /api/v1/auth/refresh
+      rate-limits:
+        - cache-key: "getRemoteAddr()"
+          bandwidths:
+            - capacity: 20
+              time: 15
+              unit: minutes
 
     - id: user-writes
       cache-name: rate-limit-user-writes
       url: /api/v1/user/me
       rate-limits:
         - execute-condition: "getMethod() == 'PATCH' or getMethod() == 'DELETE'"
-          cache-key: "@securityUtils.currentUserId()"
+          cache-key: "getRemoteAddr()"
           bandwidths:
             - capacity: 20
               time: 1
@@ -37,7 +47,7 @@ bucket4j:
       url: /api/v1/user/me
       rate-limits:
         - execute-condition: "getMethod() == 'GET'"
-          cache-key: "@securityUtils.currentUserId()"
+          cache-key: "getRemoteAddr()"
           bandwidths:
             - capacity: 100
               time: 1
