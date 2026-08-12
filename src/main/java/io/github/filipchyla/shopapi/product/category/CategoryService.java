@@ -43,7 +43,6 @@ public class CategoryService {
     public Category getCategoryById(UUID id) {
         return categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + id));
     }
-
     public Category addCategory(CreateCategoryRequest categoryData) {
         Category category = new Category();
         category.setName(categoryData.categoryName());

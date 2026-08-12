@@ -1,9 +1,9 @@
 package io.github.filipchyla.shopapi.product.dto;
 
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 
 public record UpdateStockRequest(
-        @Positive
+        @PositiveOrZero(message = "Product stock quantity should be positive or zero")
         Integer quantity
 ) {
 }

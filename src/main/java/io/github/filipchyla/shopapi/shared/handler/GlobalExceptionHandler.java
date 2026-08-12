@@ -1,6 +1,7 @@
 package io.github.filipchyla.shopapi.shared.handler;
 
 import io.github.filipchyla.shopapi.auth.exception.InvalidRefreshTokenException;
+import io.github.filipchyla.shopapi.product.category.CategoryNotFoundException;
 import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityException;
 import io.github.filipchyla.shopapi.shared.dto.ErrorResponse;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
@@ -40,8 +41,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+    @ExceptionHandler({UserNotFoundException.class, CategoryNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNotFound(UserNotFoundException ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
