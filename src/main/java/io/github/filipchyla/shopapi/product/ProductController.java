@@ -4,6 +4,7 @@ import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
 import io.github.filipchyla.shopapi.product.dto.PageResponse;
 import io.github.filipchyla.shopapi.product.dto.ProductResponse;
 import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,8 +44,13 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> addProduct(@RequestBody CreateProductRequest newProduct) {
+    public ResponseEntity<ProductResponse> addProduct(@RequestBody @Valid CreateProductRequest newProduct) {
         return ResponseEntity.ok(productMapper.toProductResponse(productService.addProduct(newProduct)));
+    }
+
+    @PatchMapping("/{id}/stock")
+    public ResponseEntity<ProductResponse> updateStock(@PathVariable UUID id, @RequestBody @Valid UpdateStockRequest request) {
+        return ResponseEntity.ok(productMapper.toProductResponse(productService.updateStock(id, request.quantity())));
     }
 
     @DeleteMapping("/{id}")

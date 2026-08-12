@@ -1,6 +1,7 @@
 package io.github.filipchyla.shopapi.shared.handler;
 
 import io.github.filipchyla.shopapi.auth.exception.InvalidRefreshTokenException;
+import io.github.filipchyla.shopapi.product.InvalidStockQuantityException;
 import io.github.filipchyla.shopapi.shared.dto.ErrorResponse;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
 import io.github.filipchyla.shopapi.user.exception.UserNotFoundException;
@@ -74,7 +75,7 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
-    @ExceptionHandler(MissingRequestCookieException.class)
+    @ExceptionHandler({MissingRequestCookieException.class, InvalidStockQuantityException.class})
     public ResponseEntity<ErrorResponse> handleMissingCookie(MissingRequestCookieException ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),

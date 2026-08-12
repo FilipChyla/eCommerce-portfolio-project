@@ -3,6 +3,7 @@ package io.github.filipchyla.shopapi.product;
 import io.github.filipchyla.shopapi.product.category.Category;
 import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,5 +50,16 @@ public class ProductService {
 
     public Product getProductById(UUID id) {
         return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
+    }
+
+    @Transactional
+    public Product updateStock(UUID id, int quantity) {
+        if (quantity <= 0) {
+            throw new InvalidStockQuantityException("Quantity must be greater than 0");
+        }
+        Product product = getProductById(id);
+        product.setStockQuantity(quantity);
+
+        return product;
     }
 }
