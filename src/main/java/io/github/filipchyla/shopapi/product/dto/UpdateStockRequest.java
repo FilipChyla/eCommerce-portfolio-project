@@ -1,4 +1,4 @@
-package io.github.filipchyla.shopapi.product;
+package io.github.filipchyla.shopapi.product.dto;
 
 import jakarta.validation.constraints.Positive;
 

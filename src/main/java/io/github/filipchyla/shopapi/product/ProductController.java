@@ -3,6 +3,7 @@ package io.github.filipchyla.shopapi.product;
 import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
 import io.github.filipchyla.shopapi.product.dto.PageResponse;
 import io.github.filipchyla.shopapi.product.dto.ProductResponse;
+import io.github.filipchyla.shopapi.product.dto.UpdateStockRequest;
 import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
