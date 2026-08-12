@@ -21,15 +21,6 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-  cache:
-    cache-names:
-      - rate-limit-auth-strict
-      - rate-limit-auth-tokens
-      - rate-limit-user-writes
-      - rate-limit-user-reads
-
-    caffeine:
-      spec: maximumSize=100000,expireAfterAccess=3600s
 
 jwt:
   secret-key: ${JWT_SECRET}
@@ -40,48 +31,3 @@ app:
     expiration-ms: 1209600000
     max-sessions-per-user: 10
     cookie-name: refreshToken
-
-bucket4j:
-  enabled: true
-  filters:
-    - id: auth-strict
-      cache-name: rate-limit-auth-strict
-      url: /api/v1/auth/(register|authenticate)
-      rate-limits:
-        - cache-key: "getRemoteAddr()"
-          bandwidths:
-            - capacity: 5
-              time: 15
-              unit: minutes
-
-    - id: auth-tokens
-      cache-name: rate-limit-auth-tokens
-      url: /api/v1/auth/(refresh|logout|logout-all)
-      rate-limits:
-        - cache-key: "@securityUtils.currentUserId()"
-          bandwidths:
-            - capacity: 10
-              time: 1
-              unit: hours
-
-    - id: user-writes
-      cache-name: rate-limit-user-writes
-      url: /api/v1/user/me
-      rate-limits:
-        - execute-condition: "getMethod() == 'PATCH' or getMethod() == 'DELETE'"
-          cache-key: "@securityUtils.currentUserId()"
-          bandwidths:
-            - capacity: 20
-              time: 1
-              unit: hours
-
-    - id: user-reads
-      cache-name: rate-limit-user-reads
-      url: /api/v1/user/me
-      rate-limits:
-        - execute-condition: "getMethod() == 'GET'"
-          cache-key: "@securityUtils.currentUserId()"
-          bandwidths:
-            - capacity: 100
-              time: 1
-              unit: minutes
