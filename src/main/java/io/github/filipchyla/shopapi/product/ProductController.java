@@ -1,9 +1,6 @@
 package io.github.filipchyla.shopapi.product;
 
-import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
-import io.github.filipchyla.shopapi.product.dto.PageResponse;
-import io.github.filipchyla.shopapi.product.dto.ProductResponse;
-import io.github.filipchyla.shopapi.product.dto.UpdateStockRequest;
+import io.github.filipchyla.shopapi.product.dto.*;
 import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -58,8 +55,14 @@ public class ProductController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}")
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable UUID id, @RequestBody @Valid UpdateProductRequest request) {
+        return ResponseEntity.ok(productMapper.toProductResponse(productService.updateProduct(id, request)));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<MessageResponse> deleteCategory(@PathVariable UUID id) {
+    public ResponseEntity<MessageResponse> deleteProduct(@PathVariable UUID id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok(new MessageResponse("Product deleted successfully"));
     }

@@ -3,9 +3,10 @@ package io.github.filipchyla.shopapi.product;
 import io.github.filipchyla.shopapi.product.category.Category;
 import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
-import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityException;
+import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;
 import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
+    private final ProductMapper productMapper;
 
     public Page<Product> findProducts(UUID categoryId, BigDecimal minPrice,
                                               BigDecimal maxPrice, Pageable pageable) {
@@ -56,12 +58,20 @@ public class ProductService {
 
     @Transactional
     public Product updateStock(UUID id, int quantity) {
-        if (quantity <= 0) {
-            throw new InvalidStockQuantityException("Quantity must be greater than 0");
-        }
         Product product = getProductById(id);
         product.setStockQuantity(quantity);
 
+        return product;
+    }
+
+    @Transactional
+    public Product updateProduct(UUID id, @Valid UpdateProductRequest request) {
+        Category category = categoryService.getCategoryById(request.categoryId());
+
+        Product product = getProductById(id);
+
+        product.setCategory(category);
+        productMapper.updateFromPatchRequest(request, product);
         return product;
     }
 }
