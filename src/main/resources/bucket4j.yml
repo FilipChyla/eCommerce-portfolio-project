@@ -1,3 +1,15 @@
+spring:
+  cache:
+    cache-names:
+      - rate-limit-auth-strict
+      - rate-limit-auth-tokens
+      - rate-limit-user-writes
+      - rate-limit-user-reads
+      - rate-limit-refresh
+
+    caffeine:
+      spec: maximumSize=100000,expireAfterAccess=3600s
+
 bucket4j:
   enabled: true
   filters:
