@@ -1,4 +1,4 @@
-package io.github.filipchyla.shopapi.product;
+package io.github.filipchyla.shopapi.product.exception;
 
 public class InvalidStockQuantityException extends RuntimeException {
     public InvalidStockQuantityException(String message) {
