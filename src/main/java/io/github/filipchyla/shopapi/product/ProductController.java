@@ -60,7 +60,7 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse> deleteCategory(@PathVariable UUID id) {
         productService.deleteProduct(id);
-        return ResponseEntity.ok(new MessageResponse("Category deleted successfully"));
+        return ResponseEntity.ok(new MessageResponse("Product deleted successfully"));
     }
 
     private void validateSortFields(Pageable pageable) {
