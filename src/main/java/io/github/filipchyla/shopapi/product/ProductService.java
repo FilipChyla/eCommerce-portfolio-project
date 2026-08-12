@@ -43,7 +43,8 @@ public class ProductService {
     }
 
     public void deleteProduct(UUID id) {
-        productRepository.deleteById(id);
+        Product product = getProductById(id);
+        product.setActive(false);
     }
 
     public Product getProductById(UUID id) {
