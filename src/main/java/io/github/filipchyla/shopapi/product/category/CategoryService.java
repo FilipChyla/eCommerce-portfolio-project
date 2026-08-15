@@ -58,9 +58,10 @@ public class CategoryService {
         categoryRepository.deleteById(id);
     }
 
+    @Transactional
     public Category updateCategory(UUID id, UpdateCategoryRequest request) {
         Category category = getCategoryById(id);
         categoryMapper.updateCategory(request, category);
-        return null;
+        return category;
     }
 }
