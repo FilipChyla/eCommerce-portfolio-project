@@ -4,16 +4,15 @@ import io.github.filipchyla.shopapi.product.category.dto.CreateCategoryRequest;
 import io.github.filipchyla.shopapi.product.category.dto.CategoryResponse;
 import io.github.filipchyla.shopapi.product.category.dto.UpdateCategoryRequest;
 import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
-@Controller
+@RestController
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
 public class CategoryController {
@@ -25,21 +24,18 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryTree());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<CategoryResponse> addCategory(@RequestBody CreateCategoryRequest categoryData) {
+    public ResponseEntity<CategoryResponse> addCategory(@RequestBody @Valid CreateCategoryRequest categoryData) {
         CategoryResponse response = categoryMapper.toCategoryResponse(categoryService.addCategory(categoryData));
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}")
-    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable UUID id, @RequestBody UpdateCategoryRequest categoryData) {
+    @PatchMapping("/{id}")
+    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable UUID id, @RequestBody @Valid UpdateCategoryRequest categoryData) {
         CategoryResponse response = categoryMapper.toCategoryResponse(categoryService.updateCategory(id, categoryData));
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse> deleteCategory(@PathVariable UUID id) {
         categoryService.deleteCategory(id);
