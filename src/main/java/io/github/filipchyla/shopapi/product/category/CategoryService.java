@@ -43,6 +43,7 @@ public class CategoryService {
     public Category getCategoryById(UUID id) {
         return categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + id));
     }
+
     public Category addCategory(CreateCategoryRequest categoryData) {
         Category category = new Category();
         category.setName(categoryData.categoryName());
@@ -61,6 +62,9 @@ public class CategoryService {
     @Transactional
     public Category updateCategory(UUID id, UpdateCategoryRequest request) {
         Category category = getCategoryById(id);
+        if (request.parentId() != null) {
+            category.setParent(getCategoryById(request.parentId()));
+        }
         categoryMapper.updateCategory(request, category);
         return category;
     }

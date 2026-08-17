@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({UserNotFoundException.class, CategoryNotFoundException.class})
-    public ResponseEntity<ErrorResponse> handleNotFound(UserNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
@@ -78,7 +78,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
     @ExceptionHandler({MissingRequestCookieException.class, InvalidStockQuantityException.class})
-    public ResponseEntity<ErrorResponse> handleMissingCookie(MissingRequestCookieException ex) {
+    public ResponseEntity<ErrorResponse> handleMissingCookie(Exception ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
