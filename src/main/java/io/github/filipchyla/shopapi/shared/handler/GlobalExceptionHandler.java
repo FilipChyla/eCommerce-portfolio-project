@@ -3,6 +3,7 @@ package io.github.filipchyla.shopapi.shared.handler;
 import io.github.filipchyla.shopapi.auth.exception.InvalidRefreshTokenException;
 import io.github.filipchyla.shopapi.product.category.CategoryNotFoundException;
 import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityException;
+import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
 import io.github.filipchyla.shopapi.shared.dto.ErrorResponse;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
 import io.github.filipchyla.shopapi.user.exception.UserNotFoundException;
@@ -41,7 +42,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler({UserNotFoundException.class, CategoryNotFoundException.class})
+    @ExceptionHandler({UserNotFoundException.class, CategoryNotFoundException.class, ProductNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
@@ -77,7 +78,7 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
-    @ExceptionHandler({MissingRequestCookieException.class, InvalidStockQuantityException.class})
+    @ExceptionHandler({MissingRequestCookieException.class, InvalidStockQuantityException.class, IllegalArgumentException.class})
     public ResponseEntity<ErrorResponse> handleMissingCookie(Exception ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),

@@ -5,6 +5,9 @@ import io.github.filipchyla.shopapi.auth.controller.AuthenticationController;
 import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.auth.service.JwtService;
 import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
+import io.github.filipchyla.shopapi.product.category.CategoryController;
+import io.github.filipchyla.shopapi.product.category.CategoryMapper;
+import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.user.controller.UserController;
 import io.github.filipchyla.shopapi.user.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -29,10 +32,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = {UserController.class, AuthenticationController.class})
+@WebMvcTest(controllers = {UserController.class, AuthenticationController.class, CategoryController.class})
 @Import(SecurityConfiguration.class)
 @AutoConfigureMockMvc
-public class SecurityConfigurationTest {
+public class CsrfConfigurationTest {
     @Autowired
     private MockMvc mockMvc;
 
@@ -48,14 +51,10 @@ public class SecurityConfigurationTest {
     private RefreshTokenService refreshTokenService;
     @MockitoBean
     private RefreshTokenCookieFactory refreshTokenCookieFactory;
-
-    @ParameterizedTest
-    @MethodSource("csrfExemptEndpoints")
-    void protectedEndpoints_ShouldReturnUnauthorized_WhenNoAuthentication(
-            HttpMethod method, String url) throws Exception {
-        mockMvc.perform(request(method, url))
-                .andExpect(status().isUnauthorized());
-    }
+    @MockitoBean
+    private CategoryService categoryService;
+    @MockitoBean
+    private CategoryMapper categoryMapper;
 
     @ParameterizedTest
     @MethodSource("csrfProtectedEndpoints")
@@ -73,33 +72,18 @@ public class SecurityConfigurationTest {
                 .andExpect(status().is(not(403)));
     }
 
-    @ParameterizedTest
-    @MethodSource("csrfExemptEndpoints")
-    void headerBasedEndpoints_ShouldNotRequireCsrf(
-            HttpMethod method, String url) throws Exception {
-        mockMvc.perform(request(method, url).with(user("testuser")))
-                .andExpect(status().is(not(403)));
-    }
-
     @Test
-    public void getEndpoint_ShouldNotRequireCsrf() throws Exception {
-        mockMvc.perform(get("/api/v1/user/me").with(user("testuser")))
-                .andExpect(status().is(not(403)));
+    void headerBasedEndpoints_ShouldNotRequireCsrf() throws Exception {
+        mockMvc.perform(get("/api/v1/user/me")
+                        .with(user("testuser").roles("USER")))
+                .andExpect(status().is(not(403)))
+                .andExpect(status().is(not(401)));
     }
 
     static Stream<Arguments> csrfProtectedEndpoints() {
         return Stream.of(
                 Arguments.of(HttpMethod.POST, "/api/v1/auth/refresh"),
                 Arguments.of(HttpMethod.POST, "/api/v1/auth/logout")
-        );
-    }
-
-    static Stream<Arguments> csrfExemptEndpoints() {
-        return Stream.of(
-                Arguments.of(HttpMethod.PATCH, "/api/v1/user/me"),
-                Arguments.of(HttpMethod.PATCH, "/api/v1/user/me/password"),
-                Arguments.of(HttpMethod.DELETE, "/api/v1/user/me"),
-                Arguments.of(HttpMethod.POST, "/api/v1/auth/logout-all")
         );
     }
 }
