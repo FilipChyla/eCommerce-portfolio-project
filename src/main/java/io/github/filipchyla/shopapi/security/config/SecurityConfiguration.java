@@ -56,6 +56,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/categories").permitAll()
                         .requestMatchers("/api/v1/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,"/api/v1/products/**").permitAll()
+                        .requestMatchers("/api/v1/products/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
