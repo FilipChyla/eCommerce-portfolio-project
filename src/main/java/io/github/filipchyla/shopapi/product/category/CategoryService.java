@@ -4,7 +4,7 @@ import io.github.filipchyla.shopapi.product.category.dto.CreateCategoryRequest;
 import io.github.filipchyla.shopapi.product.category.dto.CategoryTreeResponse;
 import io.github.filipchyla.shopapi.product.category.dto.SingleCategoryResponse;
 import io.github.filipchyla.shopapi.product.category.dto.UpdateCategoryRequest;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -46,6 +46,7 @@ public class CategoryService {
         return roots;
     }
 
+    @Transactional
     @CacheEvict(value = "categories", key = TREE_CACHE_KEY)
     public SingleCategoryResponse addCategory(CreateCategoryRequest categoryData) {
         Category category = new Category();
@@ -58,8 +59,12 @@ public class CategoryService {
         return categoryMapper.toSingleCategoryResponse(categoryRepository.save(category));
     }
 
+    @Transactional
     @CacheEvict(value = "categories", key = TREE_CACHE_KEY)
     public void deleteCategory(UUID id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new CategoryNotFoundException("Category not found with id: " + id);
+        }
         categoryRepository.deleteById(id);
     }
 
