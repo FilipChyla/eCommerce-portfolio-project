@@ -51,6 +51,7 @@ public class ProductService {
         return productMapper.toProductResponse(productRepository.save(product));
     }
 
+    @Transactional
     @CacheEvict(value = "products", key = "#id")
     public void deleteProduct(UUID id) {
         Product product = findProductById(id);
@@ -59,7 +60,7 @@ public class ProductService {
 
     @Cacheable(value = "products", key = "#id")
     public ProductResponse getProductById(UUID id) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id)); //add find
+        Product product = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
         return productMapper.toProductResponse(product);
     }
 
