@@ -21,7 +21,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
-    private final ProductMapper productMapper;
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("price", "name", "createdAt");
 
@@ -33,31 +32,32 @@ public class ProductController {
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ){
         validateSortFields(pageable);
-        Page<ProductResponse> products = productService.findProducts(categoryId, minPrice, maxPrice, pageable).map(productMapper::toProductResponse);
+        Page<ProductResponse> products = productService.findProducts(categoryId, minPrice, maxPrice, pageable);
+
         return PageResponse.from(products);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable UUID id) {
-        return ResponseEntity.ok(productMapper.toProductResponse(productService.getProductById(id)));
+        return ResponseEntity.ok(productService.getProductById(id));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ProductResponse> addProduct(@RequestBody @Valid CreateProductRequest newProduct) {
-        return ResponseEntity.ok(productMapper.toProductResponse(productService.addProduct(newProduct)));
+        return ResponseEntity.ok(productService.addProduct(newProduct));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/stock")
     public ResponseEntity<ProductResponse> updateStock(@PathVariable UUID id, @RequestBody @Valid UpdateStockRequest request) {
-        return ResponseEntity.ok(productMapper.toProductResponse(productService.updateStock(id, request.quantity())));
+        return ResponseEntity.ok(productService.updateStock(id, request.quantity()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(@PathVariable UUID id, @RequestBody @Valid UpdateProductRequest request) {
-        return ResponseEntity.ok(productMapper.toProductResponse(productService.updateProduct(id, request)));
+        return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

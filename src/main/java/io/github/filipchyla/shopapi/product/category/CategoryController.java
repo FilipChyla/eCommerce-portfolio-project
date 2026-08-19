@@ -1,7 +1,8 @@
 package io.github.filipchyla.shopapi.product.category;
 
+import io.github.filipchyla.shopapi.product.category.dto.CategoryTreeResponse;
 import io.github.filipchyla.shopapi.product.category.dto.CreateCategoryRequest;
-import io.github.filipchyla.shopapi.product.category.dto.CategoryResponse;
+import io.github.filipchyla.shopapi.product.category.dto.SingleCategoryResponse;
 import io.github.filipchyla.shopapi.product.category.dto.UpdateCategoryRequest;
 import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
 import jakarta.validation.Valid;
@@ -17,22 +18,21 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CategoryController {
     private final CategoryService categoryService;
-    private final CategoryMapper categoryMapper;
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponse>> getCategories() {
+    public ResponseEntity<List<CategoryTreeResponse>> getCategories() {
         return ResponseEntity.ok(categoryService.getCategoryTree());
     }
 
     @PostMapping
-    public ResponseEntity<CategoryResponse> addCategory(@RequestBody @Valid CreateCategoryRequest categoryData) {
-        CategoryResponse response = categoryMapper.toCategoryResponse(categoryService.addCategory(categoryData));
+    public ResponseEntity<SingleCategoryResponse> addCategory(@RequestBody @Valid CreateCategoryRequest categoryData) {
+        SingleCategoryResponse response = categoryService.addCategory(categoryData);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable UUID id, @RequestBody @Valid UpdateCategoryRequest categoryData) {
-        CategoryResponse response = categoryMapper.toCategoryResponse(categoryService.updateCategory(id, categoryData));
+    public ResponseEntity<SingleCategoryResponse> updateCategory(@PathVariable UUID id, @RequestBody @Valid UpdateCategoryRequest categoryData) {
+        SingleCategoryResponse response = categoryService.updateCategory(id, categoryData);
         return ResponseEntity.ok(response);
     }
 

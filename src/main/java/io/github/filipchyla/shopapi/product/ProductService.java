@@ -3,11 +3,15 @@ package io.github.filipchyla.shopapi.product;
 import io.github.filipchyla.shopapi.product.category.Category;
 import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
+import io.github.filipchyla.shopapi.product.dto.ProductResponse;
 import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;
 import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,17 +27,17 @@ public class ProductService {
     private final CategoryService categoryService;
     private final ProductMapper productMapper;
 
-    public Page<Product> findProducts(UUID categoryId, BigDecimal minPrice,
+    public Page<ProductResponse> findProducts(UUID categoryId, BigDecimal minPrice,
                                               BigDecimal maxPrice, Pageable pageable) {
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
             throw new IllegalArgumentException("minPrice must be smaller than maxPrice");
         }
 
         Specification<Product> spec = ProductSpecification.filterBy(categoryId, minPrice, maxPrice);
-
-        return productRepository.findAll(spec, pageable);
+        return productRepository.findAll(spec, pageable).map(productMapper::toProductResponse);
     }
-    public Product addProduct(CreateProductRequest newProduct) {
+
+    public ProductResponse addProduct(CreateProductRequest newProduct) {
         Product product = new Product();
         product.setName(newProduct.name());
         product.setDescription(newProduct.description());
@@ -44,34 +48,43 @@ public class ProductService {
 
         product.setCategory(category);
 
-        return productRepository.save(product);
+        return productMapper.toProductResponse(productRepository.save(product));
     }
 
+    @CacheEvict(value = "products", key = "#id")
     public void deleteProduct(UUID id) {
-        Product product = getProductById(id);
+        Product product = findProductById(id);
         product.setActive(false);
     }
 
-    public Product getProductById(UUID id) {
-        return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
+    @Cacheable(value = "products", key = "#id")
+    public ProductResponse getProductById(UUID id) {
+        Product product = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id)); //add find
+        return productMapper.toProductResponse(product);
     }
 
+    @CachePut(value = "products", key = "#id")
     @Transactional
-    public Product updateStock(UUID id, int quantity) {
-        Product product = getProductById(id);
+    public ProductResponse updateStock(UUID id, int quantity) {
+        Product product = findProductById(id);
         product.setStockQuantity(quantity);
 
-        return product;
+        return productMapper.toProductResponse(product);
     }
 
+    @CachePut(value = "products", key = "#id")
     @Transactional
-    public Product updateProduct(UUID id, @Valid UpdateProductRequest request) {
+    public ProductResponse updateProduct(UUID id, @Valid UpdateProductRequest request) {
         Category category = categoryService.getCategoryById(request.categoryId());
 
-        Product product = getProductById(id);
+        Product product = findProductById(id);
 
         product.setCategory(category);
         productMapper.updateFromPatchRequest(request, product);
-        return product;
+        return productMapper.toProductResponse(product);
+    }
+
+    private Product findProductById(UUID id) {
+        return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
     }
 }

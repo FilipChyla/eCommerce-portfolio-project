@@ -7,14 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public record CategoryResponse(
+public record CategoryTreeResponse(
         UUID id,
         String name,
         Instant createdAt,
-        List<CategoryResponse> children
+        List<CategoryTreeResponse> children
 ) {
-    public static CategoryResponse leaf(Category category) {
-        return new CategoryResponse(
+    public static CategoryTreeResponse leaf(Category category) {
+        return new CategoryTreeResponse(
                 category.getId(),
                 category.getName(),
                 category.getCreatedAt(),

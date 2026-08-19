@@ -1,13 +1,13 @@
 package io.github.filipchyla.shopapi.product.category;
 
-import io.github.filipchyla.shopapi.product.category.dto.CategoryResponse;
+import io.github.filipchyla.shopapi.product.category.dto.CategoryTreeResponse;
 import io.github.filipchyla.shopapi.product.category.dto.CreateCategoryRequest;
+import io.github.filipchyla.shopapi.product.category.dto.SingleCategoryResponse;
 import io.github.filipchyla.shopapi.product.category.dto.UpdateCategoryRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -49,7 +49,7 @@ class CategoryServiceTest {
             when(categoryRepository.findAllOrdered()).thenReturn(List.of());
 
             // When
-            List<CategoryResponse> result = categoryService.getCategoryTree();
+            List<CategoryTreeResponse> result = categoryService.getCategoryTree();
 
             // Then
             assertThat(result).isEmpty();
@@ -64,11 +64,11 @@ class CategoryServiceTest {
             when(categoryRepository.findAllOrdered()).thenReturn(List.of(first, second));
 
             // When
-            List<CategoryResponse> result = categoryService.getCategoryTree();
+            List<CategoryTreeResponse> result = categoryService.getCategoryTree();
 
             // Then
             assertThat(result).hasSize(2);
-            assertThat(result).extracting(CategoryResponse::name)
+            assertThat(result).extracting(CategoryTreeResponse::name)
                     .containsExactly("Electronics", "Books");
             assertThat(result).allSatisfy(dto -> assertThat(dto.children()).isEmpty());
         }
@@ -83,16 +83,16 @@ class CategoryServiceTest {
             when(categoryRepository.findAllOrdered()).thenReturn(List.of(root, child, grandchild));
 
             //When
-            List<CategoryResponse> result = categoryService.getCategoryTree();
+            List<CategoryTreeResponse> result = categoryService.getCategoryTree();
 
             //Then
             assertThat(result).hasSize(1);
 
-            CategoryResponse rootDto = result.getFirst();
+            CategoryTreeResponse rootDto = result.getFirst();
             assertThat(rootDto.name()).isEqualTo("Electronics");
             assertThat(rootDto.children()).hasSize(1);
 
-            CategoryResponse childDto = rootDto.children().getFirst();
+            CategoryTreeResponse childDto = rootDto.children().getFirst();
             assertThat(childDto.name()).isEqualTo("Laptops");
             assertThat(childDto.children()).hasSize(1);
 
@@ -109,7 +109,7 @@ class CategoryServiceTest {
             when(categoryRepository.findAllOrdered()).thenReturn(List.of(root1, root2, child));
 
             //When
-            List<CategoryResponse> result = categoryService.getCategoryTree();
+            List<CategoryTreeResponse> result = categoryService.getCategoryTree();
 
             //Then
             assertThat(result).hasSize(2);
@@ -159,17 +159,19 @@ class CategoryServiceTest {
         void addCategory_ShouldSaveCategoryWithoutParent_WhenParentIdIsNull() {
             // Given
             CreateCategoryRequest request = new CreateCategoryRequest("Electronics", null);
+            SingleCategoryResponse response = new SingleCategoryResponse(UUID.randomUUID(), request.categoryName(), Instant.now(), request.parentId());
+
             when(categoryRepository.save(any(Category.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(categoryMapper.toSingleCategoryResponse(any(Category.class))).thenReturn(response);
 
             // When
-            Category result = categoryService.addCategory(request);
+            SingleCategoryResponse result = categoryService.addCategory(request);
 
             //Then
-            ArgumentCaptor<Category> captor = ArgumentCaptor.forClass(Category.class);
-            verify(categoryRepository).save(captor.capture());
-            assertThat(captor.getValue().getName()).isEqualTo("Electronics");
-            assertThat(captor.getValue().getParent()).isNull();
-            assertThat(result.getName()).isEqualTo("Electronics");
+            assertThat(result.name()).isEqualTo(request.categoryName());
+            assertThat(result.parentId()).isEqualTo(request.parentId());
+
+            verify(categoryRepository).save(any());
             verify(categoryRepository, never()).findById(any());
         }
 
@@ -179,17 +181,23 @@ class CategoryServiceTest {
             UUID parentId = UUID.randomUUID();
             Category parent = buildCategory("Electronics", null);
             parent.setId(parentId);
+
             CreateCategoryRequest request = new CreateCategoryRequest("Laptops", parentId);
+            SingleCategoryResponse response = new SingleCategoryResponse(UUID.randomUUID(), request.categoryName(), Instant.now(), request.parentId());
 
             when(categoryRepository.findById(parentId)).thenReturn(Optional.of(parent));
             when(categoryRepository.save(any(Category.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(categoryMapper.toSingleCategoryResponse(any(Category.class))).thenReturn(response);
 
             // When
-            Category result = categoryService.addCategory(request);
+            SingleCategoryResponse result = categoryService.addCategory(request);
 
             //Then
-            assertThat(result.getParent()).isEqualTo(parent);
-            assertThat(result.getName()).isEqualTo("Laptops");
+            assertThat(result.name()).isEqualTo(request.categoryName());
+            assertThat(result.parentId()).isEqualTo(request.parentId());
+
+            verify(categoryRepository).findById(parentId);
+            verify(categoryRepository).save(any());
         }
 
         @Test
@@ -224,13 +232,11 @@ class CategoryServiceTest {
 
     @Nested
     class UpdateCategory {
-        private UpdateCategoryRequest request;
         private UUID id;
 
         @BeforeEach
         void setUp() {
             id = UUID.randomUUID();
-            request = new UpdateCategoryRequest("Consumer Electronics", null);
         }
 
         @Test
@@ -239,38 +245,46 @@ class CategoryServiceTest {
             Category parent = buildCategory("Books", null);
             Category category = buildCategory("Electronics", parent);
 
+            UpdateCategoryRequest request = new UpdateCategoryRequest("Consumer Electronics", null);
+            SingleCategoryResponse response = new SingleCategoryResponse(category.getId(), "Electronics", Instant.now(), parent.getId());
+
             when(categoryRepository.findById(id)).thenReturn(Optional.of(category));
+            when(categoryMapper.toSingleCategoryResponse(category)).thenReturn(response);
 
             // When
-            Category result = categoryService.updateCategory(id, request);
+            SingleCategoryResponse result = categoryService.updateCategory(id, request);
 
             // Then
-            assertThat(result).isEqualTo(category);
-            assertThat(result.getParent()).isEqualTo(parent);
+            assertThat(result).isEqualTo(response);
+            assertThat(result.parentId()).isEqualTo(parent.getId());
         }
 
         @Test
         void updateCategory_ShouldOverrideParent_WhenParentIdIsNotNull() {
             // Given
-            Category parent = buildCategory("Books", null);
-            request = new UpdateCategoryRequest("Consumer Electronics", parent.getId());
+            Category oldCategory = buildCategory("Electronics", null);
+            Category newParent = buildCategory("Books", null);
 
-            Category category = buildCategory("Electronics", null);
+            UpdateCategoryRequest request = new UpdateCategoryRequest("Consumer Electronics", newParent.getId());
+            SingleCategoryResponse response = new SingleCategoryResponse(oldCategory.getId(), "Consumer Electronics", Instant.now(), newParent.getId());
 
-            when(categoryRepository.findById(id)).thenReturn(Optional.of(category));
-            when(categoryRepository.findById(parent.getId())).thenReturn(Optional.of(parent));
+            when(categoryRepository.findById(id)).thenReturn(Optional.of(oldCategory));
+            when(categoryRepository.findById(newParent.getId())).thenReturn(Optional.of(newParent));
+            when(categoryMapper.toSingleCategoryResponse(oldCategory)).thenReturn(response);
 
             // When
-            Category result = categoryService.updateCategory(id, request);
+            SingleCategoryResponse result = categoryService.updateCategory(id, request);
 
             // Then
-            assertThat(result).isEqualTo(category);
-            assertThat(result.getParent()).isEqualTo(parent);
+            assertThat(result).isEqualTo(response);
+            assertThat(result.parentId()).isEqualTo(newParent.getId());
         }
 
         @Test
         void updateCategory_ShouldThrowNotFound_WhenCategoryDoesNotExist() {
             // Given
+            UpdateCategoryRequest request = new UpdateCategoryRequest("Consumer Electronics", null);
+
             when(categoryRepository.findById(id)).thenReturn(Optional.empty());
 
             // When & Then
@@ -284,7 +298,7 @@ class CategoryServiceTest {
         void updateCategory_ShouldThrowNotFound_WhenParentDoesNotExist() {
             // Given
             UUID parentId = UUID.randomUUID();
-            request = new UpdateCategoryRequest("Consumer Electronics", parentId);
+            UpdateCategoryRequest request = new UpdateCategoryRequest("Consumer Electronics", parentId);
 
             Category category = buildCategory("Electronics", null);
 

@@ -1,8 +1,9 @@
 package io.github.filipchyla.shopapi.product.category;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.filipchyla.shopapi.product.category.dto.CategoryResponse;
+import io.github.filipchyla.shopapi.product.category.dto.CategoryTreeResponse;
 import io.github.filipchyla.shopapi.product.category.dto.CreateCategoryRequest;
+import io.github.filipchyla.shopapi.product.category.dto.SingleCategoryResponse;
 import io.github.filipchyla.shopapi.product.category.dto.UpdateCategoryRequest;
 import io.github.filipchyla.shopapi.security.filter.JwtAuthenticationFilter;
 import org.junit.jupiter.api.Nested;
@@ -37,15 +38,13 @@ class CategoryControllerTest {
     private JwtAuthenticationFilter jwtFilter;
     @MockitoBean
     private CategoryService categoryService;
-    @MockitoBean
-    private CategoryMapper categoryMapper;
 
     @Nested
     class GetCategories {
         @Test
         void getCategories_ShouldReturnCategoryTreeFromService_WhenCategoriesExist() throws Exception {
             // Given
-            CategoryResponse response = new CategoryResponse(UUID.randomUUID(), "Electronics", Instant.now(), List.of());
+            CategoryTreeResponse response = new CategoryTreeResponse(UUID.randomUUID(), "Electronics", Instant.now(), List.of());
             when(categoryService.getCategoryTree()).thenReturn(List.of(response));
 
             // When & Then
@@ -74,9 +73,9 @@ class CategoryControllerTest {
             UUID grandchildId = UUID.randomUUID();
             Instant createdAt = Instant.parse("2026-01-01T10:00:00Z");
 
-            CategoryResponse grandchild = new CategoryResponse(grandchildId, "Gaming Laptops", createdAt, new ArrayList<>());
-            CategoryResponse child = new CategoryResponse(childId, "Laptops", createdAt, new ArrayList<>(List.of(grandchild)));
-            CategoryResponse root = new CategoryResponse(rootId, "Electronics", createdAt, new ArrayList<>(List.of(child)));
+            CategoryTreeResponse grandchild = new CategoryTreeResponse(grandchildId, "Gaming Laptops", createdAt, new ArrayList<>());
+            CategoryTreeResponse child = new CategoryTreeResponse(childId, "Laptops", createdAt, new ArrayList<>(List.of(grandchild)));
+            CategoryTreeResponse root = new CategoryTreeResponse(rootId, "Electronics", createdAt, new ArrayList<>(List.of(child)));
 
             when(categoryService.getCategoryTree()).thenReturn(List.of(root));
 
@@ -102,19 +101,18 @@ class CategoryControllerTest {
         @Test
         void addCategory_ShouldCreateCategoryAndReturnsMappedResponse_WhenRequestIsCorrect() throws Exception {
             CreateCategoryRequest request = new CreateCategoryRequest("Electronics", null);
-            Category savedCategory = new Category();
-            savedCategory.setId(UUID.randomUUID());
-            savedCategory.setName("Electronics");
-            CategoryResponse response = new CategoryResponse(savedCategory.getId(), "Electronics", Instant.now(), List.of());
+            SingleCategoryResponse response = new SingleCategoryResponse(UUID.randomUUID(), "Electronics", Instant.now(), null);
 
-            when(categoryService.addCategory(any(CreateCategoryRequest.class))).thenReturn(savedCategory);
-            when(categoryMapper.toCategoryResponse(savedCategory)).thenReturn(response);
+            when(categoryService.addCategory(request)).thenReturn(response);
 
             mockMvc.perform(post("/api/v1/categories")
                             .contentType("application/json")
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name").value("Electronics"));
+                    .andExpect(jsonPath("$.id").exists())
+                    .andExpect(jsonPath("$.name").value("Electronics"))
+                    .andExpect(jsonPath("$.createdAt").exists())
+                    .andExpect(jsonPath("$.parent").doesNotExist());
 
             verify(categoryService).addCategory(request);
         }
@@ -137,39 +135,33 @@ class CategoryControllerTest {
         @Test
         void update_ShouldUpdateCategoryAndReturnsMappedResponse_WhenRequestIsValid() throws Exception {
             UUID id = UUID.randomUUID();
-            UpdateCategoryRequest request = new UpdateCategoryRequest("Consumer Electronics", null);
-            Category updatedCategory = new Category();
-            updatedCategory.setId(id);
-            updatedCategory.setName("Consumer Electronics");
-            CategoryResponse response = new CategoryResponse(id, "Consumer Electronics", Instant.now(), List.of());
 
-            when(categoryService.updateCategory(eq(id), any(UpdateCategoryRequest.class))).thenReturn(updatedCategory);
-            when(categoryMapper.toCategoryResponse(updatedCategory)).thenReturn(response);
+            UpdateCategoryRequest request = new UpdateCategoryRequest("Consumer Electronics", null);
+            SingleCategoryResponse response = new SingleCategoryResponse(UUID.randomUUID(), "Electronics", Instant.now(), null);
+
+            when(categoryService.updateCategory(eq(id), any(UpdateCategoryRequest.class))).thenReturn(response);
 
             mockMvc.perform(patch("/api/v1/categories/{id}", id)
                             .contentType("application/json")
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name").value("Consumer Electronics"));
+                    .andExpect(jsonPath("$.id").exists())
+                    .andExpect(jsonPath("$.name").value("Electronics"))
+                    .andExpect(jsonPath("$.createdAt").exists())
+                    .andExpect(jsonPath("$.parent").doesNotExist());
         }
 
         @Test
         void update_ShouldReturnNotFound_WhenIdDoesNotExist() throws Exception {
             UUID id = UUID.randomUUID();
             UpdateCategoryRequest request = new UpdateCategoryRequest("Consumer Electronics", null);
-            Category updatedCategory = new Category();
-            updatedCategory.setId(id);
-            updatedCategory.setName("Consumer Electronics");
-            CategoryResponse response = new CategoryResponse(id, "Consumer Electronics", Instant.now(), List.of());
 
-            when(categoryService.updateCategory(eq(id), any(UpdateCategoryRequest.class))).thenReturn(updatedCategory);
-            when(categoryMapper.toCategoryResponse(updatedCategory)).thenReturn(response);
+            when(categoryService.updateCategory(eq(id), any(UpdateCategoryRequest.class))).thenThrow(CategoryNotFoundException.class);
 
             mockMvc.perform(patch("/api/v1/categories/{id}", id)
                             .contentType("application/json")
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name").value("Consumer Electronics"));
+                    .andExpect(status().isNotFound());
         }
     }
 

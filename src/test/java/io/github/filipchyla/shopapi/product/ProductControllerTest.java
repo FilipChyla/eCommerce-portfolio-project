@@ -42,8 +42,6 @@ class ProductControllerTest {
     private JwtAuthenticationFilter jwtFilter;
     @MockitoBean
     private ProductService productService;
-    @MockitoBean
-    private ProductMapper productMapper;
 
     private static final String BASE_URL = "/api/v1/products";
 
@@ -52,21 +50,24 @@ class ProductControllerTest {
         @Test
         void getProducts_ShouldReturnPageOfProducts_WhenNoFiltersProvided() throws Exception {
             // Given
-            Product product = new Product();
-            product.setId(UUID.randomUUID());
-            product.setName("Laptop");
-            ProductResponse response = new ProductResponse(product.getId(), "Laptop", "A laptop",
-                    BigDecimal.valueOf(1000), 10, "Electronics", Instant.now());
-            Page<Product> page = new PageImpl<>(List.of(product));
+            ProductResponse product = new ProductResponse(
+                    UUID.randomUUID(),
+                    "Existing product",
+                    "Existing description",
+                    BigDecimal.valueOf(50),
+                    10,
+                    "Category Name",
+                    Instant.now()
+            );
+            Page<ProductResponse> page = new PageImpl<>(List.of(product));
 
             when(productService.findProducts(isNull(), isNull(), isNull(), any())).thenReturn(page);
-            when(productMapper.toProductResponse(product)).thenReturn(response);
 
             // When & Then
             mockMvc.perform(get(BASE_URL))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content", hasSize(1)))
-                    .andExpect(jsonPath("$.content[0].name").value("Laptop"));
+                    .andExpect(jsonPath("$.content[0].name").value("Existing product"));
         }
 
         @Test
@@ -117,13 +118,10 @@ class ProductControllerTest {
         void getProduct_ShouldReturnProduct_WhenProductExists() throws Exception {
             // Given
             UUID id = UUID.randomUUID();
-            Product product = new Product();
-            product.setId(id);
-            ProductResponse response = new ProductResponse(id, "Laptop", "A laptop",
+            ProductResponse product = new ProductResponse(id, "Laptop", "A laptop",
                     BigDecimal.valueOf(1000), 10, "Electronics", Instant.now());
 
             when(productService.getProductById(id)).thenReturn(product);
-            when(productMapper.toProductResponse(product)).thenReturn(response);
 
             // When & Then
             mockMvc.perform(get(BASE_URL + "/{id}", id))
@@ -150,14 +148,10 @@ class ProductControllerTest {
             // Given
             CreateProductRequest request = new CreateProductRequest(
                     "Laptop", "A laptop", BigDecimal.valueOf(1000), 10, UUID.randomUUID());
-            Product savedProduct = new Product();
-            savedProduct.setId(UUID.randomUUID());
-            savedProduct.setName("Laptop");
-            ProductResponse response = new ProductResponse(savedProduct.getId(), "Laptop", "A laptop",
+            ProductResponse response = new ProductResponse(UUID.randomUUID(), "Laptop", "A laptop",
                     BigDecimal.valueOf(1000), 10, "Electronics", Instant.now());
 
-            when(productService.addProduct(any(CreateProductRequest.class))).thenReturn(savedProduct);
-            when(productMapper.toProductResponse(savedProduct)).thenReturn(response);
+            when(productService.addProduct(any(CreateProductRequest.class))).thenReturn(response);
 
             // When & Then
             mockMvc.perform(post(BASE_URL)
@@ -192,14 +186,10 @@ class ProductControllerTest {
             // Given
             UUID id = UUID.randomUUID();
             UpdateStockRequest request = new UpdateStockRequest(42);
-            Product updatedProduct = new Product();
-            updatedProduct.setId(id);
-            updatedProduct.setStockQuantity(42);
             ProductResponse response = new ProductResponse(id, "Laptop", "A laptop",
                     BigDecimal.valueOf(1000), 42, "Electronics", Instant.now());
 
-            when(productService.updateStock(id, request.quantity())).thenReturn(updatedProduct);
-            when(productMapper.toProductResponse(updatedProduct)).thenReturn(response);
+            when(productService.updateStock(id, request.quantity())).thenReturn(response);
 
             // When & Then
             mockMvc.perform(patch(BASE_URL + "/{id}/stock", id)
@@ -233,14 +223,10 @@ class ProductControllerTest {
             UUID id = UUID.randomUUID();
             UpdateProductRequest request = new UpdateProductRequest(
                     "Gaming Laptop", null, null, null, null);
-            Product updatedProduct = new Product();
-            updatedProduct.setId(id);
-            updatedProduct.setName("Gaming Laptop");
             ProductResponse response = new ProductResponse(id, "Gaming Laptop", "A laptop",
                     BigDecimal.valueOf(1000), 10, "Electronics", Instant.now());
 
-            when(productService.updateProduct(eq(id), any(UpdateProductRequest.class))).thenReturn(updatedProduct);
-            when(productMapper.toProductResponse(updatedProduct)).thenReturn(response);
+            when(productService.updateProduct(eq(id), any(UpdateProductRequest.class))).thenReturn(response);
 
             // When & Then
             mockMvc.perform(patch(BASE_URL + "/{id}", id)

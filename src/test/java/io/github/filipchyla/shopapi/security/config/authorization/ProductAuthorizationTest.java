@@ -1,9 +1,9 @@
 package io.github.filipchyla.shopapi.security.config.authorization;
 
-import io.github.filipchyla.shopapi.product.Product;
 import io.github.filipchyla.shopapi.product.ProductController;
 import io.github.filipchyla.shopapi.product.ProductMapper;
 import io.github.filipchyla.shopapi.product.ProductService;
+import io.github.filipchyla.shopapi.product.dto.ProductResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -35,7 +35,7 @@ class ProductAuthorizationTest extends AuthorizationTest {
 
     @Test
     void getProducts_IsAccessible_WithoutAuthentication() throws Exception {
-        Page<Product> products = new PageImpl<>(List.of());
+        Page<ProductResponse> products = new PageImpl<>(List.of());
 
         when(productService.findProducts(
                         nullable(UUID.class),
