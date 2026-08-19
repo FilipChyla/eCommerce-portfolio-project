@@ -1,10 +1,13 @@
 package io.github.filipchyla.shopapi.product.category;
 
 import io.github.filipchyla.shopapi.product.category.dto.CreateCategoryRequest;
-import io.github.filipchyla.shopapi.product.category.dto.CategoryResponse;
+import io.github.filipchyla.shopapi.product.category.dto.CategoryTreeResponse;
+import io.github.filipchyla.shopapi.product.category.dto.SingleCategoryResponse;
 import io.github.filipchyla.shopapi.product.category.dto.UpdateCategoryRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,24 +18,27 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
 
+    private static final String TREE_CACHE_KEY = "'tree'";
+
     @Transactional
-    public List<CategoryResponse> getCategoryTree() {
+    @Cacheable(value = "categories", key = TREE_CACHE_KEY)
+    public List<CategoryTreeResponse> getCategoryTree() {
         List<Category> allCategories = categoryRepository.findAllOrdered();
 
-        Map<UUID, CategoryResponse> dtoById = new LinkedHashMap<>();
+        Map<UUID, CategoryTreeResponse> dtoById = new LinkedHashMap<>();
         for (Category category : allCategories) {
-            dtoById.put(category.getId(), CategoryResponse.leaf(category));
+            dtoById.put(category.getId(), CategoryTreeResponse.leaf(category));
         }
 
-        List<CategoryResponse> roots = new ArrayList<>();
+        List<CategoryTreeResponse> roots = new ArrayList<>();
         for (Category category : allCategories) {
-            CategoryResponse dto = dtoById.get(category.getId());
+            CategoryTreeResponse dto = dtoById.get(category.getId());
             Category parent = category.getParent();
 
             if (parent == null) {
                 roots.add(dto);
             } else {
-                CategoryResponse parentDto = dtoById.get(parent.getId());
+                CategoryTreeResponse parentDto = dtoById.get(parent.getId());
                 parentDto.children().add(dto);
             }
         }
@@ -40,11 +46,8 @@ public class CategoryService {
         return roots;
     }
 
-    public Category getCategoryById(UUID id) {
-        return categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + id));
-    }
-
-    public Category addCategory(CreateCategoryRequest categoryData) {
+    @CacheEvict(value = "categories", key = TREE_CACHE_KEY)
+    public SingleCategoryResponse addCategory(CreateCategoryRequest categoryData) {
         Category category = new Category();
         category.setName(categoryData.categoryName());
 
@@ -52,20 +55,26 @@ public class CategoryService {
             category.setParent(getCategoryById(categoryData.parentId()));
         }
 
-        return categoryRepository.save(category);
+        return categoryMapper.toSingleCategoryResponse(categoryRepository.save(category));
     }
 
+    @CacheEvict(value = "categories", key = TREE_CACHE_KEY)
     public void deleteCategory(UUID id) {
         categoryRepository.deleteById(id);
     }
 
     @Transactional
-    public Category updateCategory(UUID id, UpdateCategoryRequest request) {
+    @CacheEvict(value = "categories", key = TREE_CACHE_KEY)
+    public SingleCategoryResponse updateCategory(UUID id, UpdateCategoryRequest request) {
         Category category = getCategoryById(id);
         if (request.parentId() != null) {
             category.setParent(getCategoryById(request.parentId()));
         }
         categoryMapper.updateCategory(request, category);
-        return category;
+        return categoryMapper.toSingleCategoryResponse(category);
+    }
+
+    public Category getCategoryById(UUID id) {
+        return categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + id));
     }
 }
