@@ -6,6 +6,8 @@ spring:
       - rate-limit-user-writes
       - rate-limit-user-reads
       - rate-limit-refresh
+      - rate-limit-product-reads
+      - rate-limit-product-writes
 
     caffeine:
       spec: maximumSize=100000,expireAfterAccess=3600s
@@ -65,3 +67,24 @@ bucket4j:
             - capacity: 100
               time: 1
               unit: minutes
+    - id: product-reads
+      cache-name: rate-limit-product-reads
+      url: /api/v1/products.*
+      rate-limits:
+        - execute-condition: "getMethod() == 'GET'"
+          cache-key: "getRemoteAddr()"
+          bandwidths:
+            - capacity: 300
+              time: 1
+              unit: minutes
+
+    - id: product-writes
+      cache-name: rate-limit-product-writes
+      url: /api/v1/products.*
+      rate-limits:
+        - execute-condition: "getMethod() == 'POST' or getMethod() == 'PATCH' or getMethod() == 'DELETE'"
+          cache-key: "getRemoteAddr()"
+          bandwidths:
+            - capacity: 60
+              time: 1
+              unit: hours
