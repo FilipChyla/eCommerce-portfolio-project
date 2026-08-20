@@ -12,6 +12,7 @@ spring:
 
 bucket4j:
   enabled: true
+  cache-to-use: redis-jedis
   filters:
     - id: auth-strict
       cache-name: rate-limit-auth-strict
