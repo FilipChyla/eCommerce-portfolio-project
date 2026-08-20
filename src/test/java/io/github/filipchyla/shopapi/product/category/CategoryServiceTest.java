@@ -221,6 +221,7 @@ class CategoryServiceTest {
         void deleteCategory_ShouldDelegateToRepository() {
             // Given
             UUID id = UUID.randomUUID();
+            when(categoryRepository.existsById(id)).thenReturn(true);
 
             // When
             categoryService.deleteCategory(id);
