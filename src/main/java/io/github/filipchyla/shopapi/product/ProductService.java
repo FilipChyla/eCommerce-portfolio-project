@@ -60,7 +60,10 @@ public class ProductService {
 
     @Cacheable(value = "products", key = "#id")
     public ProductResponse getProductById(UUID id) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
+        Product product = findProductById(id);
+        if (!product.isActive()) {
+            throw new ProductNotFoundException("Product not found with id: " + id);
+        }
         return productMapper.toProductResponse(product);
     }
 
@@ -76,11 +79,13 @@ public class ProductService {
     @CachePut(value = "products", key = "#id")
     @Transactional
     public ProductResponse updateProduct(UUID id, @Valid UpdateProductRequest request) {
-        Category category = categoryService.getCategoryById(request.categoryId());
-
         Product product = findProductById(id);
 
-        product.setCategory(category);
+        if (request.categoryId() != null){
+            Category category = categoryService.getCategoryById(request.categoryId());
+            product.setCategory(category);
+        }
+
         productMapper.updateFromPatchRequest(request, product);
         return productMapper.toProductResponse(product);
     }

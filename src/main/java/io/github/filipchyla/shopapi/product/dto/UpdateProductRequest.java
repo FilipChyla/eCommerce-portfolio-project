@@ -7,9 +7,9 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record UpdateProductRequest(
-        @Size(min = 1, message = "Pole nie może być puste")
+        @Size(min = 1, message = "Product name cannot be empty")
         String name,
-        @Size(min = 1, message = "Pole nie może być puste")
+        @Size(min = 1, message = "Product description cannot be empty")
         String description,
         @PositiveOrZero(message = "Product price should be positive or zero")
         BigDecimal price,
