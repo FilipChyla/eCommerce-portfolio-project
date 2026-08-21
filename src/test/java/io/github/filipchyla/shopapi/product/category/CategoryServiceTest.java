@@ -159,7 +159,7 @@ class CategoryServiceTest {
         void addCategory_ShouldSaveCategoryWithoutParent_WhenParentIdIsNull() {
             // Given
             CreateCategoryRequest request = new CreateCategoryRequest("Electronics", null);
-            SingleCategoryResponse response = new SingleCategoryResponse(UUID.randomUUID(), request.categoryName(), Instant.now(), request.parentId());
+            SingleCategoryResponse response = new SingleCategoryResponse(UUID.randomUUID(), request.name(), Instant.now(), request.parentId());
 
             when(categoryRepository.save(any(Category.class))).thenAnswer(inv -> inv.getArgument(0));
             when(categoryMapper.toSingleCategoryResponse(any(Category.class))).thenReturn(response);
@@ -168,7 +168,7 @@ class CategoryServiceTest {
             SingleCategoryResponse result = categoryService.addCategory(request);
 
             //Then
-            assertThat(result.name()).isEqualTo(request.categoryName());
+            assertThat(result.name()).isEqualTo(request.name());
             assertThat(result.parentId()).isEqualTo(request.parentId());
 
             verify(categoryRepository).save(any());
@@ -183,7 +183,7 @@ class CategoryServiceTest {
             parent.setId(parentId);
 
             CreateCategoryRequest request = new CreateCategoryRequest("Laptops", parentId);
-            SingleCategoryResponse response = new SingleCategoryResponse(UUID.randomUUID(), request.categoryName(), Instant.now(), request.parentId());
+            SingleCategoryResponse response = new SingleCategoryResponse(UUID.randomUUID(), request.name(), Instant.now(), request.parentId());
 
             when(categoryRepository.findById(parentId)).thenReturn(Optional.of(parent));
             when(categoryRepository.save(any(Category.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -193,7 +193,7 @@ class CategoryServiceTest {
             SingleCategoryResponse result = categoryService.addCategory(request);
 
             //Then
-            assertThat(result.name()).isEqualTo(request.categoryName());
+            assertThat(result.name()).isEqualTo(request.name());
             assertThat(result.parentId()).isEqualTo(request.parentId());
 
             verify(categoryRepository).findById(parentId);

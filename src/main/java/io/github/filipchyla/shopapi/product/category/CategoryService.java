@@ -50,7 +50,7 @@ public class CategoryService {
     @CacheEvict(value = "categories", key = TREE_CACHE_KEY)
     public SingleCategoryResponse addCategory(CreateCategoryRequest categoryData) {
         Category category = new Category();
-        category.setName(categoryData.categoryName());
+        category.setName(categoryData.name());
 
         if (categoryData.parentId() != null) {
             category.setParent(getCategoryById(categoryData.parentId()));

@@ -8,7 +8,7 @@ import java.util.UUID;
 public record CreateCategoryRequest(
         @NotBlank(message = "Category name should not be blank")
         @Size(max = 100)
-        String categoryName,
+        String name,
         UUID parentId
 ) {
 }

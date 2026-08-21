@@ -112,7 +112,7 @@ class CategoryServiceCacheTest {
                     .thenReturn(mock(SingleCategoryResponse.class));
 
             CreateCategoryRequest request = mock(CreateCategoryRequest.class);
-            when(request.categoryName()).thenReturn("Electronics");
+            when(request.name()).thenReturn("Electronics");
             when(request.parentId()).thenReturn(null);
 
             // When
