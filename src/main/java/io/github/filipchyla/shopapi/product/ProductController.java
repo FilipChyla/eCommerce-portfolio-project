@@ -51,7 +51,7 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/stock")
     public ResponseEntity<ProductResponse> updateStock(@PathVariable UUID id, @RequestBody @Valid UpdateStockRequest request) {
-        return ResponseEntity.ok(productService.updateStock(id, request.quantity()));
+        return ResponseEntity.ok(productService.adjustStock(id, request.difference()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

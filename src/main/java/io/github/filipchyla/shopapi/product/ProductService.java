@@ -5,6 +5,7 @@ import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
 import io.github.filipchyla.shopapi.product.dto.ProductResponse;
 import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;
+import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityException;
 import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -69,9 +70,14 @@ public class ProductService {
 
     @CachePut(value = "products", key = "#id")
     @Transactional
-    public ProductResponse updateStock(UUID id, int quantity) {
+    public ProductResponse adjustStock(UUID id, int delta) {
         Product product = findProductById(id);
-        product.setStockQuantity(quantity);
+        int currentStock = product.getStockQuantity();
+
+        if (currentStock + delta < 0) {
+            throw new InvalidStockQuantityException("Stock difference cannot be negative");
+        }
+        product.setStockQuantity(currentStock + delta);
 
         return productMapper.toProductResponse(product);
     }

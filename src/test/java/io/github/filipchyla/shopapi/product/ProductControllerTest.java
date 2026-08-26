@@ -189,7 +189,7 @@ class ProductControllerTest {
             ProductResponse response = new ProductResponse(id, "Laptop", "A laptop",
                     BigDecimal.valueOf(1000), 42, "Electronics", Instant.now());
 
-            when(productService.updateStock(id, request.quantity())).thenReturn(response);
+            when(productService.adjustStock(id, request.difference())).thenReturn(response);
 
             // When & Then
             mockMvc.perform(patch(BASE_URL + "/{id}/stock", id)
@@ -205,7 +205,7 @@ class ProductControllerTest {
             UUID id = UUID.randomUUID();
             UpdateStockRequest request = new UpdateStockRequest(42);
 
-            when(productService.updateStock(id, request.quantity())).thenThrow(ProductNotFoundException.class);
+            when(productService.adjustStock(id, request.difference())).thenThrow(ProductNotFoundException.class);
 
             // When & Then
             mockMvc.perform(patch(BASE_URL + "/{id}/stock", id)

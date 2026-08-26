@@ -240,7 +240,7 @@ class ProductIntegrationTest {
                     .andExpect(jsonPath("$.stockQuantity").value(5));
 
             String stockBody = """
-                    {"quantity":42}
+                    {"difference":42}
                     """;
 
             mockMvc.perform(patch("/api/v1/products/{id}/stock", product.getId())
@@ -251,7 +251,7 @@ class ProductIntegrationTest {
 
             mockMvc.perform(get("/api/v1/products/{id}", product.getId()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.stockQuantity").value(42));
+                    .andExpect(jsonPath("$.stockQuantity").value(47));
         }
     }
 
@@ -346,7 +346,7 @@ class ProductIntegrationTest {
             Product product = saveProduct("Laptop", new BigDecimal("2999.99"), 5, category);
 
             String body = """
-                    {"quantity":15}
+                    {"difference":10}
                     """;
 
             mockMvc.perform(patch("/api/v1/products/{id}/stock", product.getId())
@@ -358,9 +358,26 @@ class ProductIntegrationTest {
         }
 
         @Test
+        void updateStock_DecreasesQuantity_WhenAdminAndValidRequest() throws Exception {
+            Category category = saveCategory("Electronics");
+            Product product = saveProduct("Laptop", new BigDecimal("2999.99"), 5, category);
+
+            String body = """
+                    {"difference":-3}
+                    """;
+
+            mockMvc.perform(patch("/api/v1/products/{id}/stock", product.getId())
+                            .header("Authorization", "Bearer " + adminToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.stockQuantity").value(2));
+        }
+
+        @Test
         void updateStock_ReturnsNotFound_WhenProductDoesNotExist() throws Exception {
             String body = """
-                    {"quantity":15}
+                    {"difference":15}
                     """;
 
             mockMvc.perform(patch("/api/v1/products/{id}/stock", UUID.randomUUID())

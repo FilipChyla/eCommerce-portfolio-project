@@ -61,6 +61,7 @@ class ProductServiceCacheTest {
     private Product buildProduct(UUID id) {
         Product product = new Product();
         product.setId(id);
+        product.setStockQuantity(2);
         return product;
     }
 
@@ -193,7 +194,7 @@ class ProductServiceCacheTest {
             when(productMapper.toProductResponse(product)).thenReturn(response);
 
             // When
-            ProductResponse result = productService.updateStock(id, 42);
+            ProductResponse result = productService.adjustStock(id, 42);
 
             // Then
             assertThat(result).isEqualTo(response);
@@ -216,7 +217,7 @@ class ProductServiceCacheTest {
             assertThat(getCachedValue(id)).isEqualTo(oldResponse);
 
             // When
-            productService.updateStock(id, 10);
+            productService.adjustStock(id, 10);
 
             // Then
             assertThat(getCachedValue(id)).isEqualTo(newResponse);
@@ -232,7 +233,7 @@ class ProductServiceCacheTest {
             when(productMapper.toProductResponse(product)).thenReturn(mock(ProductResponse.class));
 
             // When
-            productService.updateStock(id, 5);
+            productService.adjustStock(id, 5);
             productService.getProductById(id);
 
             // Then
@@ -276,6 +277,7 @@ class ProductServiceCacheTest {
             when(request.categoryId()).thenReturn(categoryId);
             when(categoryService.getCategoryById(categoryId))
                     .thenThrow(CategoryNotFoundException.class);
+            when(productRepository.findById(id)).thenReturn(Optional.of(mock(Product.class)));
 
             // When & Then
             assertThatThrownBy(() -> productService.updateProduct(id, request))

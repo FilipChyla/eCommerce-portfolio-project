@@ -1,9 +1,9 @@
 package io.github.filipchyla.shopapi.product.dto;
 
-import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Digits;
 
 public record UpdateStockRequest(
-        @PositiveOrZero(message = "Product stock quantity should be positive or zero")
-        Integer quantity
+        @Digits(message = "Product stock difference should have maximum number of integral digits of 6 and no fractional digits", integer = 6, fraction = 0)
+        Integer difference
 ) {
 }

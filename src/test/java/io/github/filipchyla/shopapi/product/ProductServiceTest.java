@@ -6,6 +6,7 @@ import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
 import io.github.filipchyla.shopapi.product.dto.ProductResponse;
 import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;
+import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityException;
 import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -299,7 +300,7 @@ class ProductServiceTest {
                     .thenReturn(expectedResponse);
 
             // When
-            ProductResponse result = productService.updateStock(productId, 42);
+            ProductResponse result = productService.adjustStock(productId, 22);
 
             // Then
             assertThat(productEntity.getStockQuantity()).isEqualTo(42);
@@ -310,13 +311,55 @@ class ProductServiceTest {
         }
 
         @Test
+        void updateStock_ShouldShouldSubtractQuantity_WhenDifferenceIsNegative() {
+            // Given
+            ProductResponse expectedResponse = new ProductResponse(
+                    productId,
+                    PRODUCT_NAME,
+                    PRODUCT_DESCRIPTION,
+                    PRODUCT_PRICE,
+                    8,
+                    CATEGORY_NAME,
+                    productResponse.createdAt()
+            );
+
+            when(productRepository.findById(productId))
+                    .thenReturn(Optional.of(productEntity));
+            when(productMapper.toProductResponse(productEntity))
+                    .thenReturn(expectedResponse);
+
+            // When
+            ProductResponse result = productService.adjustStock(productId, -12);
+
+            // Then
+            assertThat(productEntity.getStockQuantity()).isEqualTo(8);
+            assertThat(result).isEqualTo(expectedResponse);
+
+            verify(productRepository).findById(productId);
+            verify(productMapper).toProductResponse(productEntity);
+        }
+
+        @Test
+        void updateStock_ShouldThrowInvalidStockQuantity_WhenStockQuantityWouldBeNegative() {
+            // Given
+            when(productRepository.findById(productId))
+                    .thenReturn(Optional.of(productEntity));
+
+            // When & Then
+            assertThatThrownBy(() -> productService.adjustStock(productId, -22))
+                    .isInstanceOf(InvalidStockQuantityException.class);
+
+            verify(productMapper, never()).toProductResponse(any());
+        }
+
+        @Test
         void updateStock_ShouldThrowNotFound_WhenProductDoesNotExist() {
             // Given
             when(productRepository.findById(productId))
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThatThrownBy(() -> productService.updateStock(productId, 42))
+            assertThatThrownBy(() -> productService.adjustStock(productId, 22))
                     .isInstanceOf(ProductNotFoundException.class);
 
             verify(productMapper, never()).toProductResponse(any());
@@ -366,6 +409,8 @@ class ProductServiceTest {
         @Test
         void updateProduct_ShouldThrowNotFound_WhenCategoryDoesNotExist() {
             // Given
+            when(productRepository.findById(productId))
+                    .thenReturn(Optional.of(productEntity));
             when(categoryService.getCategoryById(newCategoryId))
                     .thenThrow(new CategoryNotFoundException(
                             "Category not found with id: " + newCategoryId
@@ -375,15 +420,12 @@ class ProductServiceTest {
             assertThatThrownBy(() -> productService.updateProduct(productId, request))
                     .isInstanceOf(CategoryNotFoundException.class);
 
-            verify(productRepository, never()).findById(any());
             verifyNoInteractions(productMapper);
         }
 
         @Test
         void updateProduct_ShouldThrowNotFound_WhenProductDoesNotExist() {
             // Given
-            when(categoryService.getCategoryById(newCategoryId))
-                    .thenReturn(newCategory);
             when(productRepository.findById(productId))
                     .thenReturn(Optional.empty());
 
