@@ -217,6 +217,26 @@ The API is organized around RESTful endpoints.
 | `PATCH`  | `/api/v1/user/me/password` | Change authenticated user's password          | Required       |
 | `DELETE` | `/api/v1/user/me`          | Disable authenticated user's account          | Required       |
 
+## Category Management
+
+| Method   | Endpoint                  | Description              | Authentication      |
+|----------|---------------------------|--------------------------|---------------------|
+| `GET`    | `/api/v1/categories`      | Get categories tree      | Not required        |
+| `POST`   | `/api/v1/categories`      | Add new category         | Admin role required |
+| `PATCH`  | `/api/v1/categories/{id}` | Update existing category | Admin role required |
+| `DELETE` | `/api/v1/categories/{id}` | Delete category          | Admin role required |
+
+## Product Management
+
+| Method   | Endpoint                      | Description                                    | Authentication      |
+|----------|-------------------------------|------------------------------------------------|---------------------|
+| `GET`    | `/api/v1/products`            | Get products list, can filter, paged           | Not required        |
+| `GET`    | `/api/v1/products/{id}`       | Get single product info                        | Not required        |
+| `POST`   | `/api/v1/products`            | Add new product                                | Admin role required |
+| `PATCH`  | `/api/v1/products/{id}`       | Update existing product                        | Admin role required |
+| `PATCH`  | `/api/v1/products/{id}/stock` | Update quantity of product by given difference | Admin role required |
+| `DELETE` | `/api/v1/products/{id}`       | Delete product                                 | Admin role required |
+
 > The API documentation will be expanded as new features are implemented.
 
 ---
@@ -238,19 +258,20 @@ The API is organized around RESTful endpoints.
 * [x] Refresh tokens
 * [x] Role-based authorization
 * [x] Rate limiting
+* [x] Basic product and category module
 
 ## In Progress
 
-* [ ] Product module
+* [ ] Shopping cart
 * [ ] API documentation
 
 ## Planned
 
-* [ ] Shopping cart
 * [ ] Orders
 * [ ] Payment integration
+* [ ] Product reviews
 * [ ] Product search
-* [ ] Shipping integration
+* [ ] Product images
 
 ---
 
