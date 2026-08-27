@@ -58,7 +58,7 @@ jobs:
             target/allure-results/**
 
       - name: PR Test Reporter
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3.0.0
         if: always()
         with:
           name: JUnit Tests
