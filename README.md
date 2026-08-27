@@ -259,11 +259,11 @@ The API is organized around RESTful endpoints.
 * [x] Role-based authorization
 * [x] Rate limiting
 * [x] Basic product and category module
+* [x] API documentation
 
 ## In Progress
 
 * [ ] Shopping cart
-* [ ] API documentation
 
 ## Planned
 

@@ -11,6 +11,9 @@ import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
 import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +25,9 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.UUID;
 
+
+
+@Tag(name = "Authentication", description = "Operations related to authentication and refresh tokens lifecycle")
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -32,6 +38,10 @@ public class AuthenticationController {
     private final RefreshTokenCookieFactory cookieFactory;
     private final UserService userService;
 
+    @Operation(
+            summary = "Register new account",
+            description = "Create new account and return tokens"
+    )
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(@Valid @RequestBody RegisterRequest request) {
         UserPrincipal userPrincipal = authenticationService.register(request);
@@ -50,6 +60,9 @@ public class AuthenticationController {
                 .body(new AuthenticationResponse(accessToken));
     }
 
+    @Operation(
+            summary = "Authenticate user"
+    )
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
         UserPrincipal userPrincipal = authenticationService.authenticate(request);
@@ -64,6 +77,9 @@ public class AuthenticationController {
                 .body(new AuthenticationResponse(accessToken));
     }
 
+    @Operation(
+            summary = "Refresh jwt token"
+    )
     @PostMapping("/refresh")
     public ResponseEntity<AuthenticationResponse> refresh(
             @CookieValue(name = "${app.refresh-token.cookie-name}") String rawRefreshToken) {
@@ -79,6 +95,9 @@ public class AuthenticationController {
                 .body(new AuthenticationResponse(accessToken));
     }
 
+    @Operation(
+            summary = "Invalidate given refresh token"
+    )
     @PostMapping("/logout")
     public ResponseEntity<MessageResponse> logout(
             @CookieValue(name = "${app.refresh-token.cookie-name}", required = false) String rawRefreshToken) {
@@ -91,6 +110,10 @@ public class AuthenticationController {
                 .body(new MessageResponse("User logged out successfully"));
     }
 
+    @Operation(
+            summary = "Invalidate all refresh tokens for authenticated user"
+    )
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/logout-all")
     public ResponseEntity<MessageResponse> logoutAll(@AuthenticationPrincipal UserPrincipal principal) {
         refreshTokenService.revokeAllForUser(principal.user().getId().toString());

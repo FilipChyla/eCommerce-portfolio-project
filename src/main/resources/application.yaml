@@ -31,3 +31,10 @@ app:
     expiration-ms: 1209600000
     max-sessions-per-user: 10
     cookie-name: refreshToken
+
+api:
+  title: ShopAPI
+  description: Backend service for shop management
+  contact:
+    name: Filip Chyła
+    email: f.chyla12@gmail.com
