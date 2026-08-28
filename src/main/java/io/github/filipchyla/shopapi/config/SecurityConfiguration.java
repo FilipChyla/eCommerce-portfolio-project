@@ -1,4 +1,4 @@
-package io.github.filipchyla.shopapi.security.config;
+package io.github.filipchyla.shopapi.config;
 
 import io.github.filipchyla.shopapi.security.filter.CsrfCookieFilter;
 import io.github.filipchyla.shopapi.security.filter.JwtAuthenticationFilter;

@@ -7,7 +7,7 @@ import io.github.filipchyla.shopapi.role.Role;
 import io.github.filipchyla.shopapi.role.RoleName;
 import io.github.filipchyla.shopapi.role.RoleRepository;
 import io.github.filipchyla.shopapi.user.User;
-import io.github.filipchyla.shopapi.user.repository.UserRepository;
+import io.github.filipchyla.shopapi.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

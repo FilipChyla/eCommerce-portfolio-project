@@ -1,7 +1,6 @@
-package io.github.filipchyla.shopapi.auth.controller;
+package io.github.filipchyla.shopapi.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.filipchyla.shopapi.auth.RefreshTokenCookieFactory;
 import io.github.filipchyla.shopapi.auth.dto.AuthenticationRequest;
 import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
@@ -11,7 +10,7 @@ import io.github.filipchyla.shopapi.auth.service.JwtService;
 import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.user.User;
-import io.github.filipchyla.shopapi.user.service.UserService;
+import io.github.filipchyla.shopapi.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

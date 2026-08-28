@@ -1,4 +1,4 @@
-package io.github.filipchyla.shopapi.security.config.authorization;
+package io.github.filipchyla.shopapi.config.authorization;
 
 import io.github.filipchyla.shopapi.product.ProductController;
 import io.github.filipchyla.shopapi.product.ProductMapper;

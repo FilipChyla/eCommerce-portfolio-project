@@ -1,15 +1,11 @@
-package io.github.filipchyla.shopapi.user.service;
+package io.github.filipchyla.shopapi.user;
 
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
 import io.github.filipchyla.shopapi.role.Role;
 import io.github.filipchyla.shopapi.role.RoleName;
 import io.github.filipchyla.shopapi.role.RoleRepository;
-import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
 import io.github.filipchyla.shopapi.user.dto.UserResponse;
-import io.github.filipchyla.shopapi.user.exception.UserNotFoundException;
-import io.github.filipchyla.shopapi.user.mapper.UserMapper;
-import io.github.filipchyla.shopapi.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

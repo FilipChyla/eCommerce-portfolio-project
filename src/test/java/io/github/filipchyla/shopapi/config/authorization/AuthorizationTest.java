@@ -1,7 +1,7 @@
-package io.github.filipchyla.shopapi.security.config.authorization;
+package io.github.filipchyla.shopapi.config.authorization;
 
 import io.github.filipchyla.shopapi.auth.service.JwtService;
-import io.github.filipchyla.shopapi.security.config.SecurityConfiguration;
+import io.github.filipchyla.shopapi.config.SecurityConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.core.userdetails.UserDetailsService;

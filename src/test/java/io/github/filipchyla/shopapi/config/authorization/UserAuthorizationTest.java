@@ -1,8 +1,8 @@
-package io.github.filipchyla.shopapi.security.config.authorization;
+package io.github.filipchyla.shopapi.config.authorization;
 
 import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
-import io.github.filipchyla.shopapi.user.controller.UserController;
-import io.github.filipchyla.shopapi.user.service.UserService;
+import io.github.filipchyla.shopapi.user.UserController;
+import io.github.filipchyla.shopapi.user.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

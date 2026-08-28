@@ -1,10 +1,10 @@
-package io.github.filipchyla.shopapi;
+package io.github.filipchyla.shopapi.auth;
 
 import io.github.filipchyla.shopapi.role.Role;
 import io.github.filipchyla.shopapi.role.RoleName;
 import io.github.filipchyla.shopapi.role.RoleRepository;
 import io.github.filipchyla.shopapi.user.User;
-import io.github.filipchyla.shopapi.user.repository.UserRepository;
+import io.github.filipchyla.shopapi.user.UserRepository;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @ActiveProfiles({"test", "testcontainers"})
 @AutoConfigureMockMvc
-class AuthControllerIntegrationTest {
+class AuthIntegrationTest {
     @Autowired
     private RoleRepository roleRepository;
     @Autowired
