@@ -6,6 +6,7 @@ import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
 import io.github.filipchyla.shopapi.product.dto.ProductResponse;
 import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;
+import io.github.filipchyla.shopapi.product.exception.InvalidFilteringArgumentException;
 import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityException;
 import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -152,7 +153,7 @@ class ProductServiceTest {
                     BigDecimal.TEN,
                     pageable
             ))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidFilteringArgumentException.class)
                     .hasMessage("minPrice must be smaller than maxPrice");
 
             verifyNoInteractions(productRepository, productMapper);

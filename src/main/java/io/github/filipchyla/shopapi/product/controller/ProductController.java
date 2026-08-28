@@ -2,6 +2,7 @@ package io.github.filipchyla.shopapi.product.controller;
 
 import io.github.filipchyla.shopapi.product.ProductService;
 import io.github.filipchyla.shopapi.product.dto.*;
+import io.github.filipchyla.shopapi.product.exception.InvalidFilteringArgumentException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +55,7 @@ public class ProductController {
     private void validateSortFields(Pageable pageable) {
         pageable.getSort().forEach(order -> {
             if (!ALLOWED_SORT_FIELDS.contains(order.getProperty())) {
-                throw new IllegalArgumentException("Unsupported field: " + order.getProperty());
+                throw new InvalidFilteringArgumentException("Unsupported field: " + order.getProperty());
             }
         });
     }

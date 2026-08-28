@@ -1,12 +1,10 @@
 package io.github.filipchyla.shopapi.shared;
 
-import io.github.filipchyla.shopapi.auth.exception.InvalidRefreshTokenException;
-import io.github.filipchyla.shopapi.product.category.CategoryNotFoundException;
-import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityException;
-import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
 import io.github.filipchyla.shopapi.shared.dto.ErrorResponse;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
-import io.github.filipchyla.shopapi.user.UserNotFoundException;
+import io.github.filipchyla.shopapi.shared.exception.BadRequestException;
+import io.github.filipchyla.shopapi.shared.exception.NotFoundException;
+import io.github.filipchyla.shopapi.shared.exception.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,11 +20,11 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredentials() {
+    @ExceptionHandler({UnauthorizedException.class, BadCredentialsException.class})
+    public ResponseEntity<ErrorResponse> handleBadCredentials(Exception ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
-                "Incorrect credentials",
+                ex.getMessage(),
                 LocalDateTime.now()
         );
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
@@ -42,7 +40,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler({UserNotFoundException.class, CategoryNotFoundException.class, ProductNotFoundException.class})
+    @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
@@ -69,16 +67,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(InvalidRefreshTokenException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidRefreshToken(RuntimeException ex) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                ex.getMessage(),
-                LocalDateTime.now());
-
-        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
-    }
-    @ExceptionHandler({MissingRequestCookieException.class, InvalidStockQuantityException.class, IllegalArgumentException.class})
+    @ExceptionHandler({MissingRequestCookieException.class, BadRequestException.class})
     public ResponseEntity<ErrorResponse> handleMissingCookie(Exception ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
