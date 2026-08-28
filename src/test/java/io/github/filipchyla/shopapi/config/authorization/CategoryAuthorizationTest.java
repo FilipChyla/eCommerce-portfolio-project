@@ -1,6 +1,7 @@
 package io.github.filipchyla.shopapi.config.authorization;
 
-import io.github.filipchyla.shopapi.product.category.CategoryController;
+import io.github.filipchyla.shopapi.product.category.controller.CategoryAdminController;
+import io.github.filipchyla.shopapi.product.category.controller.CategoryController;
 import io.github.filipchyla.shopapi.product.category.CategoryMapper;
 import io.github.filipchyla.shopapi.product.category.CategoryService;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CategoryController.class)
+@WebMvcTest({CategoryController.class, CategoryAdminController.class})
 @AutoConfigureMockMvc
 class CategoryAuthorizationTest extends AuthorizationTest{
     @MockitoBean
@@ -33,20 +34,20 @@ class CategoryAuthorizationTest extends AuthorizationTest{
 
     @Test
     void postCategories_IsNotAccessible_WithoutAuthentication() throws Exception {
-        mockMvc.perform(post("/api/v1/categories"))
+        mockMvc.perform(post("/api/v1/admin/categories"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void postCategories_ReturnsForbidden_WhenUser() throws Exception {
-        mockMvc.perform(post("/api/v1/categories")
+        mockMvc.perform(post("/api/v1/admin/categories")
                         .with(user("testuser").roles("USER")))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void postCategories_IsAccessible_WhenAdmin() throws Exception {
-        mockMvc.perform(post("/api/v1/categories")
+        mockMvc.perform(post("/api/v1/admin/categories")
                         .with(user("testadmin").roles("ADMIN")))
                 .andExpect(status().is(not(403)))
                 .andExpect(status().is(not(401)));
@@ -54,20 +55,20 @@ class CategoryAuthorizationTest extends AuthorizationTest{
 
     @Test
     void deleteCategory_IsNotAccessible_WithoutAuthentication() throws Exception {
-        mockMvc.perform(delete("/api/v1/categories/{id}", UUID.randomUUID()))
+        mockMvc.perform(delete("/api/v1/admin/categories/{id}", UUID.randomUUID()))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void deleteCategory_ReturnsForbidden_WhenUser() throws Exception {
-        mockMvc.perform(delete("/api/v1/categories/{id}", UUID.randomUUID())
+        mockMvc.perform(delete("/api/v1/admin/categories/{id}", UUID.randomUUID())
                         .with(user("testuser").roles("USER")))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void deleteCategory_IsAccessible_WhenAdmin() throws Exception {
-        mockMvc.perform(delete("/api/v1/categories/{id}", UUID.randomUUID())
+        mockMvc.perform(delete("/api/v1/admin/categories/{id}", UUID.randomUUID())
                         .with(user("testadmin").roles("ADMIN")))
                 .andExpect(status().is(not(403)))
                 .andExpect(status().is(not(401)));

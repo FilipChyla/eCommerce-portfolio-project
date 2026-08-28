@@ -18,7 +18,7 @@ public class OpenApiConfig {
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()
                 .group("public-api")
-                .pathsToMatch("/api/v1/auth/**", "/api/v1/user/me/**")
+                .pathsToMatch("/api/v1/auth/**", "/api/v1/user/me/**", "/api/v1/categories/**", "/api/v1/products/**")
                 .build();
     }
 
@@ -26,7 +26,7 @@ public class OpenApiConfig {
     public GroupedOpenApi adminApi() {
         return GroupedOpenApi.builder()
                 .group("admin-api")
-                .pathsToMatch("/api/v1/products/**", "/api/v1/categories/**")
+                .pathsToMatch("/api/v1/admin/**")
                 .build();
     }
 }

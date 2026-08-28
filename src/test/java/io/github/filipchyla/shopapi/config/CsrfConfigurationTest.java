@@ -5,7 +5,7 @@ import io.github.filipchyla.shopapi.auth.AuthenticationController;
 import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.auth.service.JwtService;
 import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
-import io.github.filipchyla.shopapi.product.category.CategoryController;
+import io.github.filipchyla.shopapi.product.category.controller.CategoryController;
 import io.github.filipchyla.shopapi.product.category.CategoryMapper;
 import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.user.UserController;
