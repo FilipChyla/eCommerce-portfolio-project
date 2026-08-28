@@ -170,7 +170,7 @@ class CategoryIntegrationTest {
                     {"name":"Electronics"}
                     """;
 
-            mockMvc.perform(post("/api/v1/categories")
+            mockMvc.perform(post("/api/v1/admin/categories")
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -188,7 +188,7 @@ class CategoryIntegrationTest {
                     {"name":"Laptops","parentId":"%s"}
                     """.formatted(parent.getId());
 
-            mockMvc.perform(post("/api/v1/categories")
+            mockMvc.perform(post("/api/v1/admin/categories")
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -205,7 +205,7 @@ class CategoryIntegrationTest {
                     {"name":"Electronics"}
                     """;
 
-            mockMvc.perform(post("/api/v1/categories")
+            mockMvc.perform(post("/api/v1/admin/categories")
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -223,7 +223,7 @@ class CategoryIntegrationTest {
                     {"name":""}
                     """;
 
-            mockMvc.perform(post("/api/v1/categories")
+            mockMvc.perform(post("/api/v1/admin/categories")
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -236,7 +236,7 @@ class CategoryIntegrationTest {
                     {"name":"Laptops","parentId":"%s"}
                     """.formatted(UUID.randomUUID());
 
-            mockMvc.perform(post("/api/v1/categories")
+            mockMvc.perform(post("/api/v1/admin/categories")
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -249,7 +249,7 @@ class CategoryIntegrationTest {
                     {"name":"Electronics"}
                     """;
 
-            mockMvc.perform(post("/api/v1/categories")
+            mockMvc.perform(post("/api/v1/admin/categories")
                             .header("Authorization", "Bearer " + userToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -262,7 +262,7 @@ class CategoryIntegrationTest {
                     {"name":"Electronics"}
                     """;
 
-            mockMvc.perform(post("/api/v1/categories")
+            mockMvc.perform(post("/api/v1/admin/categories")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isUnauthorized());
@@ -280,7 +280,7 @@ class CategoryIntegrationTest {
                     {"name":"Consumer Electronics"}
                     """;
 
-            mockMvc.perform(patch("/api/v1/categories/{id}", category.getId())
+            mockMvc.perform(patch("/api/v1/admin/categories/{id}", category.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -298,7 +298,7 @@ class CategoryIntegrationTest {
                     {"parentId":"%s"}
                     """.formatted(newParent.getId());
 
-            mockMvc.perform(patch("/api/v1/categories/{id}", child.getId())
+            mockMvc.perform(patch("/api/v1/admin/categories/{id}", child.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -314,7 +314,7 @@ class CategoryIntegrationTest {
                     {"parentId":null}
                     """;
 
-            mockMvc.perform(patch("/api/v1/categories/{id}", category.getId())
+            mockMvc.perform(patch("/api/v1/admin/categories/{id}", category.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -330,7 +330,7 @@ class CategoryIntegrationTest {
                     {"name":"AB"}
                     """;
 
-            mockMvc.perform(patch("/api/v1/categories/{id}", category.getId())
+            mockMvc.perform(patch("/api/v1/admin/categories/{id}", category.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -343,7 +343,7 @@ class CategoryIntegrationTest {
                     {"name":"Doesn't matter"}
                     """;
 
-            mockMvc.perform(patch("/api/v1/categories/{id}", UUID.randomUUID())
+            mockMvc.perform(patch("/api/v1/admin/categories/{id}", UUID.randomUUID())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -358,7 +358,7 @@ class CategoryIntegrationTest {
                     {"parentId":"%s"}
                     """.formatted(UUID.randomUUID());
 
-            mockMvc.perform(patch("/api/v1/categories/{id}", category.getId())
+            mockMvc.perform(patch("/api/v1/admin/categories/{id}", category.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -373,7 +373,7 @@ class CategoryIntegrationTest {
                     {"name":"Consumer Electronics"}
                     """;
 
-            mockMvc.perform(patch("/api/v1/categories/{id}", category.getId())
+            mockMvc.perform(patch("/api/v1/admin/categories/{id}", category.getId())
                             .header("Authorization", "Bearer " + userToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -387,7 +387,7 @@ class CategoryIntegrationTest {
         void deleteCategory_DeletesCategory_WhenAdminAndCategoryExists() throws Exception {
             Category category = saveCategory("Electronics", null);
 
-            mockMvc.perform(delete("/api/v1/categories/{id}", category.getId())
+            mockMvc.perform(delete("/api/v1/admin/categories/{id}", category.getId())
                             .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message").value("Category deleted successfully"));
@@ -399,7 +399,7 @@ class CategoryIntegrationTest {
 
         @Test
         void deleteCategory_ReturnsNotFound_WhenCategoryDoesNotExist() throws Exception {
-            mockMvc.perform(delete("/api/v1/categories/{id}", UUID.randomUUID())
+            mockMvc.perform(delete("/api/v1/admin/categories/{id}", UUID.randomUUID())
                             .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isNotFound());
         }
@@ -408,7 +408,7 @@ class CategoryIntegrationTest {
         void deleteCategory_ReturnsForbidden_WhenUserIsNotAdmin() throws Exception {
             Category category = saveCategory("Electronics", null);
 
-            mockMvc.perform(delete("/api/v1/categories/{id}", category.getId())
+            mockMvc.perform(delete("/api/v1/admin/categories/{id}", category.getId())
                             .header("Authorization", "Bearer " + userToken))
                     .andExpect(status().isForbidden());
         }
@@ -417,7 +417,7 @@ class CategoryIntegrationTest {
         void deleteCategory_ReturnsUnauthorized_WhenNoTokenProvided() throws Exception {
             Category category = saveCategory("Electronics", null);
 
-            mockMvc.perform(delete("/api/v1/categories/{id}", category.getId()))
+            mockMvc.perform(delete("/api/v1/admin/categories/{id}", category.getId()))
                     .andExpect(status().isUnauthorized());
         }
     }

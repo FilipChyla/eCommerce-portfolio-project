@@ -243,7 +243,7 @@ class ProductIntegrationTest {
                     {"difference":42}
                     """;
 
-            mockMvc.perform(patch("/api/v1/products/{id}/stock", product.getId())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}/stock", product.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(stockBody))
@@ -266,7 +266,7 @@ class ProductIntegrationTest {
                     {"name":"Laptop","description":"A laptop","price":2999.99,"stockQuantity":5,"categoryId":"%s"}
                     """.formatted(category.getId());
 
-            mockMvc.perform(post("/api/v1/products")
+            mockMvc.perform(post("/api/v1/admin/products")
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -287,7 +287,7 @@ class ProductIntegrationTest {
                     {"name":"","description":"A laptop","price":2999.99,"stockQuantity":5,"categoryId":"%s"}
                     """.formatted(category.getId());
 
-            mockMvc.perform(post("/api/v1/products")
+            mockMvc.perform(post("/api/v1/admin/products")
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -300,7 +300,7 @@ class ProductIntegrationTest {
                     {"name":"Laptop","description":"A laptop","price":2999.99,"stockQuantity":5,"categoryId":"%s"}
                     """.formatted(UUID.randomUUID());
 
-            mockMvc.perform(post("/api/v1/products")
+            mockMvc.perform(post("/api/v1/admin/products")
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -315,7 +315,7 @@ class ProductIntegrationTest {
                     {"name":"Laptop","description":"A laptop","price":2999.99,"stockQuantity":5,"categoryId":"%s"}
                     """.formatted(category.getId());
 
-            mockMvc.perform(post("/api/v1/products")
+            mockMvc.perform(post("/api/v1/admin/products")
                             .header("Authorization", "Bearer " + userToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -330,7 +330,7 @@ class ProductIntegrationTest {
                     {"name":"Laptop","description":"A laptop","price":2999.99,"stockQuantity":5,"categoryId":"%s"}
                     """.formatted(category.getId());
 
-            mockMvc.perform(post("/api/v1/products")
+            mockMvc.perform(post("/api/v1/admin/products")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isUnauthorized());
@@ -349,7 +349,7 @@ class ProductIntegrationTest {
                     {"difference":10}
                     """;
 
-            mockMvc.perform(patch("/api/v1/products/{id}/stock", product.getId())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}/stock", product.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -366,7 +366,7 @@ class ProductIntegrationTest {
                     {"difference":-3}
                     """;
 
-            mockMvc.perform(patch("/api/v1/products/{id}/stock", product.getId())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}/stock", product.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -380,7 +380,7 @@ class ProductIntegrationTest {
                     {"difference":15}
                     """;
 
-            mockMvc.perform(patch("/api/v1/products/{id}/stock", UUID.randomUUID())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}/stock", UUID.randomUUID())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -396,7 +396,7 @@ class ProductIntegrationTest {
                     {"quantity":15}
                     """;
 
-            mockMvc.perform(patch("/api/v1/products/{id}/stock", product.getId())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}/stock", product.getId())
                             .header("Authorization", "Bearer " + userToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -416,7 +416,7 @@ class ProductIntegrationTest {
                     {"name":"Gaming Laptop","price":3499.99}
                     """;
 
-            mockMvc.perform(patch("/api/v1/products/{id}", product.getId())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}", product.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -435,7 +435,7 @@ class ProductIntegrationTest {
                     {"categoryId":"%s"}
                     """.formatted(newCategory.getId());
 
-            mockMvc.perform(patch("/api/v1/products/{id}", product.getId())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}", product.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -452,7 +452,7 @@ class ProductIntegrationTest {
                     {"price":-10}
                     """;
 
-            mockMvc.perform(patch("/api/v1/products/{id}", product.getId())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}", product.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -465,7 +465,7 @@ class ProductIntegrationTest {
                     {"name":"Doesn't matter"}
                     """;
 
-            mockMvc.perform(patch("/api/v1/products/{id}", UUID.randomUUID())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}", UUID.randomUUID())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -481,7 +481,7 @@ class ProductIntegrationTest {
                     {"categoryId":"%s"}
                     """.formatted(UUID.randomUUID());
 
-            mockMvc.perform(patch("/api/v1/products/{id}", product.getId())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}", product.getId())
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -497,7 +497,7 @@ class ProductIntegrationTest {
                     {"name":"Gaming Laptop"}
                     """;
 
-            mockMvc.perform(patch("/api/v1/products/{id}", product.getId())
+            mockMvc.perform(patch("/api/v1/admin/products/{id}", product.getId())
                             .header("Authorization", "Bearer " + userToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
@@ -513,7 +513,7 @@ class ProductIntegrationTest {
             Category category = saveCategory("Electronics");
             Product product = saveProduct("Laptop", new BigDecimal("2999.99"), 5, category);
 
-            mockMvc.perform(delete("/api/v1/products/{id}", product.getId())
+            mockMvc.perform(delete("/api/v1/admin/products/{id}", product.getId())
                             .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message").value("Product deleted successfully"));
@@ -524,7 +524,7 @@ class ProductIntegrationTest {
 
         @Test
         void deleteProduct_ReturnsNotFound_WhenProductDoesNotExist() throws Exception {
-            mockMvc.perform(delete("/api/v1/products/{id}", UUID.randomUUID())
+            mockMvc.perform(delete("/api/v1/admin/products/{id}", UUID.randomUUID())
                             .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isNotFound());
         }
@@ -534,7 +534,7 @@ class ProductIntegrationTest {
             Category category = saveCategory("Electronics");
             Product product = saveProduct("Laptop", new BigDecimal("2999.99"), 5, category);
 
-            mockMvc.perform(delete("/api/v1/products/{id}", product.getId())
+            mockMvc.perform(delete("/api/v1/admin/products/{id}", product.getId())
                             .header("Authorization", "Bearer " + userToken))
                     .andExpect(status().isForbidden());
         }
@@ -544,7 +544,7 @@ class ProductIntegrationTest {
             Category category = saveCategory("Electronics");
             Product product = saveProduct("Laptop", new BigDecimal("2999.99"), 5, category);
 
-            mockMvc.perform(delete("/api/v1/products/{id}", product.getId()))
+            mockMvc.perform(delete("/api/v1/admin/products/{id}", product.getId()))
                     .andExpect(status().isUnauthorized());
         }
     }

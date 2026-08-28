@@ -1,6 +1,6 @@
-package io.github.filipchyla.shopapi.product.category;
+package io.github.filipchyla.shopapi.product.category.controller;
 
-import io.github.filipchyla.shopapi.product.category.dto.CategoryTreeResponse;
+import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.product.category.dto.CreateCategoryRequest;
 import io.github.filipchyla.shopapi.product.category.dto.SingleCategoryResponse;
 import io.github.filipchyla.shopapi.product.category.dto.UpdateCategoryRequest;
@@ -13,31 +13,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
-
-@Tag(name = "Categories", description = "Operations related to categories")
+@Tag(name = "Categories - Admin", description = "Operations altering categories")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/api/v1/categories")
+@RequestMapping("/api/v1/admin/categories")
 @RequiredArgsConstructor
-public class CategoryController {
+public class CategoryAdminController {
     private final CategoryService categoryService;
-
-    @Operation(
-            summary = "Get categories in a tree-shaped structure",
-            description = "Get categories organized hierarchically in a tree structure. The result is cached"
-    )
-    @SecurityRequirement(name = "bearerAuth")
-    @GetMapping
-    public ResponseEntity<List<CategoryTreeResponse>> getCategories() {
-        return ResponseEntity.ok(categoryService.getCategoryTree());
-    }
 
     @Operation(
             summary = "Add new category"
     )
-    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     public ResponseEntity<SingleCategoryResponse> addCategory(@RequestBody @Valid CreateCategoryRequest categoryData) {
         SingleCategoryResponse response = categoryService.addCategory(categoryData);
@@ -47,7 +35,6 @@ public class CategoryController {
     @Operation(
             summary = "Update category"
     )
-    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/{id}")
     public ResponseEntity<SingleCategoryResponse> updateCategory(@PathVariable UUID id, @RequestBody @Valid UpdateCategoryRequest categoryData) {
         SingleCategoryResponse response = categoryService.updateCategory(id, categoryData);
@@ -57,7 +44,6 @@ public class CategoryController {
     @Operation(
             summary = "Delete category. This is hard delete"
     )
-    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse> deleteCategory(@PathVariable UUID id) {
         categoryService.deleteCategory(id);

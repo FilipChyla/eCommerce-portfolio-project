@@ -1,18 +1,15 @@
-package io.github.filipchyla.shopapi.product;
+package io.github.filipchyla.shopapi.product.controller;
 
+import io.github.filipchyla.shopapi.product.ProductService;
 import io.github.filipchyla.shopapi.product.dto.*;
-import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -52,49 +49,6 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable UUID id) {
         return ResponseEntity.ok(productService.getProductById(id));
-    }
-
-    @Operation(
-            summary = "Add new product"
-    )
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping
-    public ResponseEntity<ProductResponse> addProduct(@RequestBody @Valid CreateProductRequest newProduct) {
-        return ResponseEntity.ok(productService.addProduct(newProduct));
-    }
-
-    @Operation(
-            summary = "Change stock amount",
-            description = "Adjusts stock amount of a product by given amount. Can be negative to decrease stock amount. Updates cache"
-    )
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/{id}/stock")
-    public ResponseEntity<ProductResponse> updateStock(@PathVariable UUID id, @RequestBody @Valid UpdateStockRequest request) {
-        return ResponseEntity.ok(productService.adjustStock(id, request.difference()));
-    }
-
-    @Operation(
-            summary = "Update product information",
-            description = "Update info for fields in request, not mentioned fields will be ignored. Updates cache"
-    )
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/{id}")
-    public ResponseEntity<ProductResponse> updateProduct(@PathVariable UUID id, @RequestBody @Valid UpdateProductRequest request) {
-        return ResponseEntity.ok(productService.updateProduct(id, request));
-    }
-
-    @Operation(
-            summary = "Delete product. This is a soft delete"
-    )
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<MessageResponse> deleteProduct(@PathVariable UUID id) {
-        productService.deleteProduct(id);
-        return ResponseEntity.ok(new MessageResponse("Product deleted successfully"));
     }
 
     private void validateSortFields(Pageable pageable) {

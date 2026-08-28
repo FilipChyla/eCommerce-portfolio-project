@@ -1,6 +1,7 @@
 package io.github.filipchyla.shopapi.config.authorization;
 
-import io.github.filipchyla.shopapi.product.ProductController;
+import io.github.filipchyla.shopapi.product.controller.ProductAdminController;
+import io.github.filipchyla.shopapi.product.controller.ProductController;
 import io.github.filipchyla.shopapi.product.ProductMapper;
 import io.github.filipchyla.shopapi.product.ProductService;
 import io.github.filipchyla.shopapi.product.dto.ProductResponse;
@@ -25,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ProductController.class)
+@WebMvcTest({ProductController.class, ProductAdminController.class})
 @AutoConfigureMockMvc
 class ProductAuthorizationTest extends AuthorizationTest {
     @MockitoBean
@@ -56,20 +57,20 @@ class ProductAuthorizationTest extends AuthorizationTest {
 
     @Test
     void updateStock_IsNotAccessible_WithoutAuthentication() throws Exception {
-        mockMvc.perform(patch("/api/v1/products/{id}/stock", UUID.randomUUID()))
+        mockMvc.perform(patch("/api/v1/admin/products/{id}/stock", UUID.randomUUID()))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void updateStock_ReturnsForbidden_WhenUser() throws Exception {
-        mockMvc.perform(patch("/api/v1/products/{id}/stock", UUID.randomUUID())
+        mockMvc.perform(patch("/api/v1/admin/products/{id}/stock", UUID.randomUUID())
                         .with(user("testuser").roles("USER")))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void updateStock_IsAccessible_WhenAdmin() throws Exception {
-        mockMvc.perform(patch("/api/v1/products/{id}/stock", UUID.randomUUID())
+        mockMvc.perform(patch("/api/v1/admin/products/{id}/stock", UUID.randomUUID())
                         .with(user("testadmin").roles("ADMIN")))
                 .andExpect(status().is(not(403)))
                 .andExpect(status().is(not(401)));
