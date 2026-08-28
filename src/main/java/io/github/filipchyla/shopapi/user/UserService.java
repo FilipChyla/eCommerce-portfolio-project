@@ -3,6 +3,7 @@ package io.github.filipchyla.shopapi.user;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
 import io.github.filipchyla.shopapi.role.Role;
 import io.github.filipchyla.shopapi.role.RoleName;
+import io.github.filipchyla.shopapi.role.RoleNotFoundException;
 import io.github.filipchyla.shopapi.role.RoleRepository;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
 import io.github.filipchyla.shopapi.user.dto.UserResponse;
@@ -30,7 +31,7 @@ public class UserService {
         user.setPasswordHash(passwordHash);
 
         Role userRole = roleRepository.findByName(RoleName.USER)
-                .orElseThrow(() -> new IllegalStateException("USER role not found"));
+                .orElseThrow(() -> new RoleNotFoundException("USER role not found"));
 
         user.setRole(userRole);
 

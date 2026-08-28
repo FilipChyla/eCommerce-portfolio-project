@@ -5,6 +5,7 @@ import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
 import io.github.filipchyla.shopapi.product.dto.ProductResponse;
 import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;
+import io.github.filipchyla.shopapi.product.exception.InvalidFilteringArgumentException;
 import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityException;
 import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
 import jakarta.transaction.Transactional;
@@ -31,7 +32,7 @@ public class ProductService {
     public Page<ProductResponse> findProducts(UUID categoryId, BigDecimal minPrice,
                                               BigDecimal maxPrice, Pageable pageable) {
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
-            throw new IllegalArgumentException("minPrice must be smaller than maxPrice");
+            throw new InvalidFilteringArgumentException("minPrice must be smaller than maxPrice");
         }
 
         Specification<Product> spec = ProductSpecification.filterBy(categoryId, minPrice, maxPrice);

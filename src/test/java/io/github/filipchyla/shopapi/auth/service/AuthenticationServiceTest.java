@@ -3,6 +3,7 @@ package io.github.filipchyla.shopapi.auth.service;
 import io.github.filipchyla.shopapi.auth.dto.AuthenticationRequest;
 import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
+import io.github.filipchyla.shopapi.auth.exception.IncorrectPasswordException;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.ChangePasswordRequest;
@@ -145,7 +146,7 @@ class AuthenticationServiceTest {
         when(passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())).thenReturn(false);
 
         // When & Then
-        assertThatThrownBy(()->authenticationService.changePassword(userId, request)).isInstanceOf(BadCredentialsException.class);
+        assertThatThrownBy(()->authenticationService.changePassword(userId, request)).isInstanceOf(IncorrectPasswordException.class);
         assertThat(user.getPasswordHash()).isEqualTo(ENCODED_PASSWORD);
     }
 }

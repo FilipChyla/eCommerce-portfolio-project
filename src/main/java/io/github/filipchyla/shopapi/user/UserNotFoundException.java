@@ -1,6 +1,8 @@
 package io.github.filipchyla.shopapi.user;
 
-public class UserNotFoundException extends RuntimeException {
+import io.github.filipchyla.shopapi.shared.exception.NotFoundException;
+
+public class UserNotFoundException extends NotFoundException {
     public UserNotFoundException(String username) {
         super(username);
     }
