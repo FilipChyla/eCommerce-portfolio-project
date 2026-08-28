@@ -1,15 +1,15 @@
-package io.github.filipchyla.shopapi.security.config;
+package io.github.filipchyla.shopapi.config;
 
 import io.github.filipchyla.shopapi.auth.RefreshTokenCookieFactory;
-import io.github.filipchyla.shopapi.auth.controller.AuthenticationController;
+import io.github.filipchyla.shopapi.auth.AuthenticationController;
 import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.auth.service.JwtService;
 import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
 import io.github.filipchyla.shopapi.product.category.CategoryController;
 import io.github.filipchyla.shopapi.product.category.CategoryMapper;
 import io.github.filipchyla.shopapi.product.category.CategoryService;
-import io.github.filipchyla.shopapi.user.controller.UserController;
-import io.github.filipchyla.shopapi.user.service.UserService;
+import io.github.filipchyla.shopapi.user.UserController;
+import io.github.filipchyla.shopapi.user.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

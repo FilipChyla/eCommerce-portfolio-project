@@ -1,14 +1,12 @@
-package io.github.filipchyla.shopapi.user.controller;
+package io.github.filipchyla.shopapi.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.auth.service.JwtService;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
-import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.ChangePasswordRequest;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
 import io.github.filipchyla.shopapi.user.dto.UserResponse;
-import io.github.filipchyla.shopapi.user.service.UserService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

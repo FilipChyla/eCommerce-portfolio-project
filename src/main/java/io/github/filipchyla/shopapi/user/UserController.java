@@ -1,4 +1,4 @@
-package io.github.filipchyla.shopapi.user.controller;
+package io.github.filipchyla.shopapi.user;
 
 import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
@@ -6,7 +6,6 @@ import io.github.filipchyla.shopapi.user.dto.ChangePasswordRequest;
 import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
 import io.github.filipchyla.shopapi.user.dto.UserResponse;
-import io.github.filipchyla.shopapi.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

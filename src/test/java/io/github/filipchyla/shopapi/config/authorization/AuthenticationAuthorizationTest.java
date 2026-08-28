@@ -1,10 +1,10 @@
-package io.github.filipchyla.shopapi.security.config.authorization;
+package io.github.filipchyla.shopapi.config.authorization;
 
 import io.github.filipchyla.shopapi.auth.RefreshTokenCookieFactory;
-import io.github.filipchyla.shopapi.auth.controller.AuthenticationController;
+import io.github.filipchyla.shopapi.auth.AuthenticationController;
 import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
-import io.github.filipchyla.shopapi.user.service.UserService;
+import io.github.filipchyla.shopapi.user.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

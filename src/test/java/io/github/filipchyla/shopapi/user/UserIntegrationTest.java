@@ -1,14 +1,12 @@
-package io.github.filipchyla.shopapi;
+package io.github.filipchyla.shopapi.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.filipchyla.shopapi.role.Role;
 import io.github.filipchyla.shopapi.role.RoleName;
 import io.github.filipchyla.shopapi.role.RoleRepository;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
-import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.ChangePasswordRequest;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
-import io.github.filipchyla.shopapi.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles({"test", "h2"})
 @Transactional
-class ShopApiIntegrationTest {
+class UserIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired

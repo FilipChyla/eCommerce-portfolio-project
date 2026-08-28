@@ -1,4 +1,4 @@
-package io.github.filipchyla.shopapi.shared.handler;
+package io.github.filipchyla.shopapi.shared;
 
 import io.github.filipchyla.shopapi.auth.exception.InvalidRefreshTokenException;
 import io.github.filipchyla.shopapi.product.category.CategoryNotFoundException;
@@ -6,7 +6,7 @@ import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityExcept
 import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
 import io.github.filipchyla.shopapi.shared.dto.ErrorResponse;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
-import io.github.filipchyla.shopapi.user.exception.UserNotFoundException;
+import io.github.filipchyla.shopapi.user.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;

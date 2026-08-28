@@ -6,7 +6,7 @@ import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.user.User;
 import io.github.filipchyla.shopapi.user.dto.ChangePasswordRequest;
-import io.github.filipchyla.shopapi.user.service.UserService;
+import io.github.filipchyla.shopapi.user.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

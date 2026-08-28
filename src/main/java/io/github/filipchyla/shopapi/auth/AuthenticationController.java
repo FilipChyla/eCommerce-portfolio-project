@@ -1,6 +1,5 @@
-package io.github.filipchyla.shopapi.auth.controller;
+package io.github.filipchyla.shopapi.auth;
 
-import io.github.filipchyla.shopapi.auth.RefreshTokenCookieFactory;
 import io.github.filipchyla.shopapi.auth.dto.AuthenticationRequest;
 import io.github.filipchyla.shopapi.auth.dto.AuthenticationResponse;
 import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
@@ -10,7 +9,7 @@ import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
 import io.github.filipchyla.shopapi.user.User;
-import io.github.filipchyla.shopapi.user.service.UserService;
+import io.github.filipchyla.shopapi.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
