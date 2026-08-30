@@ -2,7 +2,7 @@ package io.github.filipchyla.shopapi.product.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.filipchyla.shopapi.product.ProductService;
-import io.github.filipchyla.shopapi.product.category.CategoryNotFoundException;
+import io.github.filipchyla.shopapi.product.category.exception.CategoryNotFoundException;
 import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
 import io.github.filipchyla.shopapi.product.dto.ProductResponse;
 import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;

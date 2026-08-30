@@ -323,6 +323,22 @@ class CategoryIntegrationTest {
         }
 
         @Test
+        void updateCategory_ReturnsConflict_WhenCircularCategoryReference() throws Exception {
+            Category parentCategory = saveCategory("Electronics", null);
+            Category childCategory = saveCategory("Electronics", parentCategory);
+
+            String body = """
+                    {"parentId":"%s"}
+                    """.formatted(childCategory.getId());
+
+            mockMvc.perform(patch("/api/v1/admin/categories/{id}", parentCategory.getId())
+                            .header("Authorization", "Bearer " + adminToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
         void updateCategory_ReturnsBadRequest_WhenNameTooShort() throws Exception {
             Category category = saveCategory("Electronics", null);
 

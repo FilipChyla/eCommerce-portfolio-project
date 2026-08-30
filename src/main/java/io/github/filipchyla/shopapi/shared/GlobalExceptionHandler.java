@@ -1,8 +1,8 @@
 package io.github.filipchyla.shopapi.shared;
 
 import io.github.filipchyla.shopapi.shared.dto.ErrorResponse;
-import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
 import io.github.filipchyla.shopapi.shared.exception.BadRequestException;
+import io.github.filipchyla.shopapi.shared.exception.ConflictException;
 import io.github.filipchyla.shopapi.shared.exception.NotFoundException;
 import io.github.filipchyla.shopapi.shared.exception.UnauthorizedException;
 import org.springframework.http.HttpStatus;
@@ -30,8 +30,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(EmailTakenException.class)
-    public ResponseEntity<ErrorResponse> handleTakenEmail(EmailTakenException ex) {
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleTakenEmail(ConflictException ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 ex.getMessage(),

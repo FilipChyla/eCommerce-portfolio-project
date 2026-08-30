@@ -4,6 +4,8 @@ import io.github.filipchyla.shopapi.product.category.dto.CategoryTreeResponse;
 import io.github.filipchyla.shopapi.product.category.dto.CreateCategoryRequest;
 import io.github.filipchyla.shopapi.product.category.dto.SingleCategoryResponse;
 import io.github.filipchyla.shopapi.product.category.dto.UpdateCategoryRequest;
+import io.github.filipchyla.shopapi.product.category.exception.CircularCategoryReferenceException;
+import io.github.filipchyla.shopapi.product.category.exception.CategoryNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -293,6 +295,24 @@ class CategoryServiceTest {
                     .isInstanceOf(CategoryNotFoundException.class);
 
             verifyNoInteractions(categoryMapper);
+        }
+
+        @Test
+        void updateCategory_ShouldThrowCategoryCycleException_WhenChildCategoryIsSetAsParent() {
+            // Given
+            Category parentCategory = buildCategory("Electronics", null);
+            Category childCategory = buildCategory("Laptops", parentCategory);
+
+            UpdateCategoryRequest request =
+                    new UpdateCategoryRequest("Electronics", childCategory.getId());
+
+            when(categoryRepository.findById(id)).thenReturn(Optional.of(parentCategory));
+            when(categoryRepository.findById(request.parentId()))
+                    .thenReturn(Optional.of(childCategory));
+
+            // When / Then
+            assertThatThrownBy(() -> categoryService.updateCategory(id, request))
+                    .isInstanceOf(CircularCategoryReferenceException.class);
         }
 
         @Test
