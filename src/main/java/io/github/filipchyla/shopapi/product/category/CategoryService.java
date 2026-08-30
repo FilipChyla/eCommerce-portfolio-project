@@ -4,6 +4,8 @@ import io.github.filipchyla.shopapi.product.category.dto.CreateCategoryRequest;
 import io.github.filipchyla.shopapi.product.category.dto.CategoryTreeResponse;
 import io.github.filipchyla.shopapi.product.category.dto.SingleCategoryResponse;
 import io.github.filipchyla.shopapi.product.category.dto.UpdateCategoryRequest;
+import io.github.filipchyla.shopapi.product.category.exception.CircularCategoryReferenceException;
+import io.github.filipchyla.shopapi.product.category.exception.CategoryNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -73,7 +75,11 @@ public class CategoryService {
     public SingleCategoryResponse updateCategory(UUID id, UpdateCategoryRequest request) {
         Category category = getCategoryById(id);
         if (request.parentId() != null) {
-            category.setParent(getCategoryById(request.parentId()));
+            Category newParent = getCategoryById(request.parentId());
+            if (wouldCreateCycle(category, newParent)) {
+                throw new CircularCategoryReferenceException("Category cannot be a child of itself or any of its descendants");
+            }
+            category.setParent(newParent);
         }
         categoryMapper.updateCategory(request, category);
         return categoryMapper.toSingleCategoryResponse(category);
@@ -81,5 +87,16 @@ public class CategoryService {
 
     public Category getCategoryById(UUID id) {
         return categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + id));
+    }
+
+    private boolean wouldCreateCycle(Category category, Category newParent) {
+        Category current = newParent;
+        while (current != null) {
+            if (current.equals(category)) {
+                return true;
+            }
+            current = current.getParent();
+        }
+        return false;
     }
 }

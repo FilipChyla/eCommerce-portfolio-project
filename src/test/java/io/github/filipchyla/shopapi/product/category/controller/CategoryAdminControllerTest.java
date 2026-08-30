@@ -1,7 +1,8 @@
 package io.github.filipchyla.shopapi.product.category.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.filipchyla.shopapi.product.category.CategoryNotFoundException;
+import io.github.filipchyla.shopapi.product.category.exception.CircularCategoryReferenceException;
+import io.github.filipchyla.shopapi.product.category.exception.CategoryNotFoundException;
 import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.product.category.dto.CreateCategoryRequest;
 import io.github.filipchyla.shopapi.product.category.dto.SingleCategoryResponse;
@@ -94,6 +95,19 @@ public class CategoryAdminControllerTest {
                     .andExpect(jsonPath("$.name").value("Electronics"))
                     .andExpect(jsonPath("$.createdAt").exists())
                     .andExpect(jsonPath("$.parent").doesNotExist());
+        }
+
+        @Test
+        void update_ShouldReturnConflict_WhenCircularCategoryReference() throws Exception {
+            UUID id = UUID.randomUUID();
+            UpdateCategoryRequest request = new UpdateCategoryRequest("Consumer Electronics", UUID.randomUUID());
+
+            when(categoryService.updateCategory(eq(id), any(UpdateCategoryRequest.class))).thenThrow(CircularCategoryReferenceException.class);
+
+            mockMvc.perform(patch(BASE_PATH + "/{id}", id)
+                            .contentType("application/json")
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isConflict());
         }
 
         @Test

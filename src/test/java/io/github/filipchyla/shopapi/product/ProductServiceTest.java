@@ -1,7 +1,7 @@
 package io.github.filipchyla.shopapi.product;
 
 import io.github.filipchyla.shopapi.product.category.Category;
-import io.github.filipchyla.shopapi.product.category.CategoryNotFoundException;
+import io.github.filipchyla.shopapi.product.category.exception.CategoryNotFoundException;
 import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
 import io.github.filipchyla.shopapi.product.dto.ProductResponse;

@@ -1,4 +1,4 @@
-package io.github.filipchyla.shopapi.product.category;
+package io.github.filipchyla.shopapi.product.category.exception;
 
 import io.github.filipchyla.shopapi.shared.exception.NotFoundException;
 
