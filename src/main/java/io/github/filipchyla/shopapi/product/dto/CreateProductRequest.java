@@ -3,6 +3,7 @@ package io.github.filipchyla.shopapi.product.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
@@ -27,8 +28,8 @@ public record CreateProductRequest(
         @Schema(
                 description = "Product price",
                 example = "129.99")
-        @NotNull(message = "Product price should not be null"
-        )
+        @NotNull(message = "Product price should not be null")
+        @Positive(message = "Product price should be positive")
         BigDecimal price,
 
         @Schema(
