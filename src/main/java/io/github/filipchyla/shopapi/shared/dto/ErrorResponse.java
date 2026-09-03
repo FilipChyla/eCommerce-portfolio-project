@@ -2,7 +2,7 @@ package io.github.filipchyla.shopapi.shared.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Schema(description = "Response containing information about an error")
 public record ErrorResponse(
@@ -22,6 +22,6 @@ public record ErrorResponse(
                 description = "Date and time when the error occurred",
                 example = "2026-08-27T12:30:00"
         )
-        LocalDateTime timestamp
+        Instant timestamp
 ) {
 }
