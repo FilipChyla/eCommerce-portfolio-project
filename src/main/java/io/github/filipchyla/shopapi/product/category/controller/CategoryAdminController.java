@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +30,8 @@ public class CategoryAdminController {
     @PostMapping
     public ResponseEntity<SingleCategoryResponse> addCategory(@RequestBody @Valid CreateCategoryRequest categoryData) {
         SingleCategoryResponse response = categoryService.addCategory(categoryData);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @Operation(

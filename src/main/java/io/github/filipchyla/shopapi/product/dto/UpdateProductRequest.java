@@ -1,6 +1,7 @@
 package io.github.filipchyla.shopapi.product.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
@@ -26,7 +27,7 @@ public record UpdateProductRequest(
         @Schema(
                 description = "Product price",
                 example = "129.99")
-        @PositiveOrZero(message = "Product price should be positive or zero")
+        @Positive(message = "Product price should be positive")
         BigDecimal price,
 
         @Schema(

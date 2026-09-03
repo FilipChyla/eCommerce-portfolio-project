@@ -174,7 +174,7 @@ class CategoryIntegrationTest {
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").exists())
                     .andExpect(jsonPath("$.name").value("Electronics"))
                     .andExpect(jsonPath("$.parentId").doesNotExist());
@@ -192,7 +192,7 @@ class CategoryIntegrationTest {
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.name").value("Laptops"))
                     .andExpect(jsonPath("$.parentId").value(parent.getId().toString()));
         }
@@ -209,7 +209,7 @@ class CategoryIntegrationTest {
                             .header("Authorization", "Bearer " + adminToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isCreated());
 
             mockMvc.perform(get("/api/v1/categories"))
                     .andExpect(status().isOk())

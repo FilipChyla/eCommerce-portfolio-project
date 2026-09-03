@@ -37,6 +37,7 @@ public record CreateProductRequest(
                 example = "50"
         )
         @PositiveOrZero(message = "Product stock quantity should be positive")
+        @NotNull(message = "Product stock quantity should not be null")
         Integer stockQuantity,
 
         @Schema(
