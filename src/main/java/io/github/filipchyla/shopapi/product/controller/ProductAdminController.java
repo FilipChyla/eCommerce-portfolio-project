@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.UUID;
 
 @Tag(name = "Products - Admin", description = "Operations altering product catalog")
@@ -32,7 +33,11 @@ public class ProductAdminController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ProductResponse> addProduct(@RequestBody @Valid CreateProductRequest newProduct) {
-        return ResponseEntity.ok(productService.addProduct(newProduct));
+        ProductResponse createdProduct = productService.addProduct(newProduct);
+        URI uri = URI.create("/api/v1/products/" + createdProduct.id());
+
+        return ResponseEntity.created(uri)
+                .body(createdProduct);
     }
 
     @Operation(

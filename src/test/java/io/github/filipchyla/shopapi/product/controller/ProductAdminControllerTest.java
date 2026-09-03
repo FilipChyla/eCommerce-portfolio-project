@@ -60,7 +60,7 @@ public class ProductAdminControllerTest {
             mockMvc.perform(post(BASE_URL)
                             .contentType("application/json")
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.name").value("Laptop"));
 
             verify(productService).addProduct(request);

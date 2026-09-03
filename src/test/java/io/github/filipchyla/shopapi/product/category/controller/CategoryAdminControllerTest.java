@@ -54,7 +54,7 @@ public class CategoryAdminControllerTest {
             mockMvc.perform(post(BASE_PATH)
                             .contentType("application/json")
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").exists())
                     .andExpect(jsonPath("$.name").value("Electronics"))
                     .andExpect(jsonPath("$.createdAt").exists())

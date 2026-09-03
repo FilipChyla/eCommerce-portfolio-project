@@ -52,7 +52,7 @@ public class AuthenticationController {
 
         ResponseCookie cookie = cookieFactory.create(refreshToken);
 
-        URI location = URI.create("/api/v1/users/me");
+        URI location = URI.create("/api/v1/user/me");
 
         return ResponseEntity.created(location)
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
