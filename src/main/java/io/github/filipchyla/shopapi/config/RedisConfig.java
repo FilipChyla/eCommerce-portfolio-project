@@ -10,9 +10,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import redis.clients.jedis.Jedis;
@@ -78,5 +80,10 @@ public class RedisConfig {
         GenericObjectPoolConfig<Jedis> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setJmxEnabled(false);
         return new JedisPool(poolConfig, host, port);
+    }
+
+    @Bean
+    public RedisScript<String> rotateRefreshTokenScript() {
+        return RedisScript.of(new ClassPathResource("scripts/rotate_refresh_token.lua"), String.class);
     }
 }
