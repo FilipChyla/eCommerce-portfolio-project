@@ -12,7 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -73,7 +73,7 @@ class UserServiceTest {
         UUID userId = UUID.randomUUID();
         user.setId(userId);
 
-        UserResponse response = new UserResponse(userId, user.getEmail(), "John", "Doe", "+48123456789", LocalDateTime.now());
+        UserResponse response = new UserResponse(userId, user.getEmail(), "John", "Doe", "+48123456789", Instant.now());
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userMapper.toResponse(user)).thenReturn(response);
@@ -113,7 +113,7 @@ class UserServiceTest {
         user.setEmail(EMAIL);
 
         PatchUserRequest request = new PatchUserRequest("John", "Doe", "+48123456789");
-        UserResponse response = new UserResponse(userId, user.getEmail(), "John", "Doe", "+48123456789", LocalDateTime.now());
+        UserResponse response = new UserResponse(userId, user.getEmail(), "John", "Doe", "+48123456789", Instant.now());
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userMapper.toResponse(user)).thenReturn(response);

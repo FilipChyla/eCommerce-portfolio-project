@@ -2,7 +2,7 @@ package io.github.filipchyla.shopapi.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Schema(description = "Response containing user details")
@@ -42,6 +42,6 @@ public record UserResponse(
                 description = "Date and time when the user was created",
                 example = "2026-08-27T12:30:00"
         )
-        LocalDateTime createdAt
+        Instant createdAt
 ) {
 }

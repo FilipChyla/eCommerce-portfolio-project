@@ -20,7 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.core.Authentication;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -81,7 +81,7 @@ class UserControllerTest {
                 FIRSTNAME,
                 LASTNAME,
                 PHONE,
-                LocalDateTime.now()
+                Instant.now()
         );
 
         when(userService.getUser(USER_ID)).thenReturn(response);
@@ -114,7 +114,7 @@ class UserControllerTest {
                 FIRSTNAME,
                 LASTNAME,
                 PHONE,
-                LocalDateTime.now()
+                Instant.now()
         );
 
         when(userService.patchUser(request, USER_ID)).thenReturn(response);
@@ -142,7 +142,7 @@ class UserControllerTest {
                 FIRSTNAME,
                 LASTNAME,
                 PHONE,
-                LocalDateTime.now()
+                Instant.now()
         );
 
         when(userService.patchUser(request, USER_ID)).thenReturn(response);
