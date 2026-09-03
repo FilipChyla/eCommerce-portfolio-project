@@ -2,6 +2,7 @@ package io.github.filipchyla.shopapi.product.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
 
 @Schema(description = "Request containing stock difference required to adjusting product's stock")
 public record UpdateStockRequest(
@@ -14,6 +15,7 @@ public record UpdateStockRequest(
                 , integer = 6
                 , fraction = 0
         )
+        @NotNull(message = "Stock difference cannot be null")
         Integer difference
 ) {
 }
