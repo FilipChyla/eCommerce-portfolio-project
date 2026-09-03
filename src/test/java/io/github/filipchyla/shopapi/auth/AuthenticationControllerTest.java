@@ -216,7 +216,7 @@ class AuthenticationControllerTest {
                     .build();
 
             when(refreshTokenService.rotateToken(oldRawToken)).thenReturn(newRawToken);
-            when(refreshTokenService.getUserIdFromToken(newRawToken)).thenReturn(user.getId().toString());
+            when(refreshTokenService.getUserIdFromToken(oldRawToken)).thenReturn(user.getId().toString());
             when(userService.getUserEntity(user.getId())).thenReturn(user);
             when(jwtService.generateToken(any(UserPrincipal.class))).thenReturn("new-access-token");
             when(cookieFactory.create(newRawToken)).thenReturn(newCookie);
@@ -237,7 +237,10 @@ class AuthenticationControllerTest {
         void refresh_ShouldNotRotateTokenAndReturnNewAccessToken_WhenCookieIsWrongOrExpired() throws Exception {
             String oldRawToken = "old-raw-refresh-token";
 
+            when(refreshTokenService.getUserIdFromToken(oldRawToken)).thenReturn(user.getId().toString());
             when(refreshTokenService.rotateToken(oldRawToken)).thenThrow(InvalidRefreshTokenException.class);
+            when(userService.getUserEntity(user.getId())).thenReturn(user);
+
 
             mockMvc.perform(post("/api/v1/auth/refresh")
                             .cookie(new jakarta.servlet.http.Cookie(COOKIE_NAME, oldRawToken)))

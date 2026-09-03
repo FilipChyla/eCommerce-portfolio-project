@@ -3,6 +3,7 @@ package io.github.filipchyla.shopapi.auth;
 import io.github.filipchyla.shopapi.auth.dto.AuthenticationRequest;
 import io.github.filipchyla.shopapi.auth.dto.AuthenticationResponse;
 import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
+import io.github.filipchyla.shopapi.auth.exception.UserDisabledException;
 import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.auth.service.JwtService;
 import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
@@ -82,13 +83,14 @@ public class AuthenticationController {
     @PostMapping("/refresh")
     public ResponseEntity<AuthenticationResponse> refresh(
             @CookieValue(name = "${app.refresh-token.cookie-name}") String rawRefreshToken) {
+        UserPrincipal userPrincipal = getPrincipalFromToken(rawRefreshToken);
+        if (!userPrincipal.isEnabled()) throw new UserDisabledException("Account is deactivated");
 
         String newRefreshToken = refreshTokenService.rotateToken(rawRefreshToken);
 
-        UserPrincipal userPrincipal = getPrincipalFromToken(newRefreshToken);
         String accessToken = jwtService.generateToken(userPrincipal);
-
         ResponseCookie cookie = cookieFactory.create(newRefreshToken);
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(new AuthenticationResponse(accessToken));
