@@ -23,6 +23,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
     public UserPrincipal register(RegisterRequest request) {
         userService.createUser(
@@ -54,5 +55,6 @@ public class AuthenticationService {
             throw new IncorrectPasswordException("Current password is incorrect");
         }
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        refreshTokenService.revokeAllForUser(id.toString());
     }
 }
