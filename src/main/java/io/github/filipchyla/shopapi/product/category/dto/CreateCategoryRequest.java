@@ -13,7 +13,7 @@ public record CreateCategoryRequest(
                 example = "Electronics"
         )
         @NotBlank(message = "Category name should not be blank")
-        @Size(max = 100)
+        @Size(max = 100, min = 3, message = "Category name should be between 3 and 100 characters")
         String name,
 
         @Schema(
