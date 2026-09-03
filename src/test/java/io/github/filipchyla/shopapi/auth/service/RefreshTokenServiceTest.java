@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.filipchyla.shopapi.auth.dto.RefreshTokenData;
 import io.github.filipchyla.shopapi.auth.exception.InvalidRefreshTokenException;
+import io.github.filipchyla.shopapi.auth.exception.RefreshTokenReuseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -191,6 +192,8 @@ class RefreshTokenServiceTest {
 
             when(valueOperations.get(tokenKey(oldHash)))
                     .thenReturn("old-json");
+            when(valueOperations.get(familyKey(DEFAULT_FAMILY_ID)))
+                    .thenReturn(oldHash);
             when(objectMapper.readValue("old-json", RefreshTokenData.class))
                     .thenReturn(tokenData(DEFAULT_FAMILY_ID));
             when(objectMapper.writeValueAsString(any(RefreshTokenData.class)))
@@ -209,6 +212,27 @@ class RefreshTokenServiceTest {
             verify(valueOperations).set(startsWith(TOKEN_KEY_PREFIX), eq(newJson), any());
             verify(zSetOperations).add(eq(sessionsKey()), anyString(), anyDouble());
             verify(valueOperations).set(eq(familyKey(DEFAULT_FAMILY_ID)), anyString(), any());
+        }
+
+        @Test
+        void shouldRevokeFamilyWhenOldTokenIsNotFamilyHead() throws JsonProcessingException {
+            String rawOldToken = "old-refresh-token";
+            String oldHash = hash(rawOldToken);
+            String currentHeadHash = "some-other-hash";
+
+            when(valueOperations.get(tokenKey(oldHash))).thenReturn("old-json");
+            when(objectMapper.readValue("old-json", RefreshTokenData.class))
+                    .thenReturn(tokenData(DEFAULT_FAMILY_ID));
+            when(valueOperations.get(familyKey(DEFAULT_FAMILY_ID))).thenReturn(currentHeadHash);
+            when(valueOperations.get(tokenKey(currentHeadHash))).thenReturn("head-json");
+            when(objectMapper.readValue("head-json", RefreshTokenData.class))
+                    .thenReturn(tokenData(DEFAULT_FAMILY_ID));
+
+            assertThrows(RefreshTokenReuseException.class,
+                    () -> refreshTokenService.rotateToken(rawOldToken));
+
+            verify(redis).delete(tokenKey(currentHeadHash));
+            verify(redis).delete(familyKey(DEFAULT_FAMILY_ID));
         }
 
         @Test

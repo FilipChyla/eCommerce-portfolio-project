@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.filipchyla.shopapi.auth.dto.RefreshTokenData;
 import io.github.filipchyla.shopapi.auth.exception.InvalidRefreshTokenException;
+import io.github.filipchyla.shopapi.auth.exception.RefreshTokenReuseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -15,6 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -43,6 +45,15 @@ public class RefreshTokenService {
     public String rotateToken(String rawOldToken) {
         String oldHash = hash(rawOldToken);
         RefreshTokenData oldTokenData = requireTokenData(oldHash);
+
+        String familyId = oldTokenData.familyId();
+
+        String currentFamilyHead = redis.opsForValue().get(familyKey(familyId));
+
+        if (!Objects.equals(oldHash, currentFamilyHead)) {
+            revokeFamily(familyId, currentFamilyHead, oldTokenData.userId());
+            throw new RefreshTokenReuseException("Detected reuse of rotated token, family revoked");
+        }
 
         revokeSingle(oldHash, oldTokenData);
         return createAndSaveToken(oldTokenData.userId(), oldTokenData.familyId());
@@ -121,6 +132,16 @@ public class RefreshTokenService {
     private void revokeSingle(String tokenHash, RefreshTokenData data) {
         redis.delete(tokenKey(tokenHash));
         redis.opsForZSet().remove(userSessionsKey(data.userId()), tokenHash);
+    }
+
+    private void revokeFamily(String familyId, String currentHeadHash, String fallbackUserId) {
+        if (currentHeadHash != null) {
+            RefreshTokenData headData = findTokenData(currentHeadHash);
+            String userId = headData != null ? headData.userId() : fallbackUserId;
+            redis.opsForZSet().remove(userSessionsKey(userId), currentHeadHash);
+            redis.delete(tokenKey(currentHeadHash));
+        }
+        redis.delete(familyKey(familyId));
     }
 
     private void deleteSession(String tokenHash, RefreshTokenData data) {
