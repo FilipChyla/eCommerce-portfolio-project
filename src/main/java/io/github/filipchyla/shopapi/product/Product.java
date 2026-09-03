@@ -15,7 +15,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "products")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 public class Product {
 
@@ -42,6 +43,9 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @Version
+    private Long version;
 
     @CreationTimestamp
     private Instant createdAt;

@@ -92,7 +92,7 @@ public class CategoryService {
     private boolean wouldCreateCycle(Category category, Category newParent) {
         Category current = newParent;
         while (current != null) {
-            if (current.equals(category)) {
+            if (current.getId().equals(category.getId())) {
                 return true;
             }
             current = current.getParent();
