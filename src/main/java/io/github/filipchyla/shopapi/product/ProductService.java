@@ -11,6 +11,9 @@ import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,10 +27,12 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
     private final ProductMapper productMapper;
+    private final CacheManager cacheManager;
 
     public Page<ProductResponse> findProducts(UUID categoryId, BigDecimal minPrice,
                                               BigDecimal maxPrice, Pageable pageable) {
@@ -83,7 +88,6 @@ public class ProductService {
         return productMapper.toProductResponse(product);
     }
 
-    @CachePut(value = "products", key = "#id")
     @Transactional
     public ProductResponse updateProduct(UUID id, @Valid UpdateProductRequest request) {
         Product product = findProductById(id);
@@ -94,7 +98,18 @@ public class ProductService {
         }
 
         productMapper.updateFromPatchRequest(request, product);
-        return productMapper.toProductResponse(product);
+        ProductResponse response = productMapper.toProductResponse(product);
+
+        Cache cache = cacheManager.getCache("products");
+        if (cache == null) {
+            log.warn("Cache 'products' is not configured; skipping cache update for id={}", id);
+        } else if (product.isActive()) {
+            cache.put(id, response);
+        } else {
+            cache.evict(id);
+        }
+
+        return response;
     }
 
     private Product findProductById(UUID id) {
