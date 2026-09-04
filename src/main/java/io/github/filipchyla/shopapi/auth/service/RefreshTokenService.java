@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.filipchyla.shopapi.auth.dto.RefreshTokenData;
 import io.github.filipchyla.shopapi.auth.exception.InvalidRefreshTokenException;
+import io.github.filipchyla.shopapi.auth.exception.RefreshTokenReuseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -14,14 +16,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
-
+    private final RedisScript<String> rotateRefreshTokenScript;
     private final RedisTemplate<String, String> redis;
     private final ObjectMapper objectMapper;
 
@@ -43,9 +43,43 @@ public class RefreshTokenService {
     public String rotateToken(String rawOldToken) {
         String oldHash = hash(rawOldToken);
         RefreshTokenData oldTokenData = requireTokenData(oldHash);
+        String familyId = oldTokenData.familyId();
 
-        revokeSingle(oldHash, oldTokenData);
-        return createAndSaveToken(oldTokenData.userId(), oldTokenData.familyId());
+        String rawNewToken = UUID.randomUUID().toString();
+        String newHash = hash(rawNewToken);
+        RefreshTokenData newData = new RefreshTokenData(oldTokenData.userId(), familyId, Instant.now());
+        String newJson = writeJson(newData);
+
+        String result = redis.execute(
+                rotateRefreshTokenScript,
+                List.of(
+                        familyKey(familyId),
+                        tokenKey(oldHash),
+                        tokenKey(newHash),
+                        userSessionsKey(oldTokenData.userId())
+                ),
+                oldHash,
+                newHash,
+                newJson,
+                String.valueOf(expirationMs),
+                String.valueOf(Instant.now().toEpochMilli())
+        );
+
+        if (!"OK".equals(result)) {
+            revokeFamily(familyId, result, oldTokenData.userId());
+            throw new RefreshTokenReuseException("Detected reuse of rotated token, family revoked");
+        }
+
+        evictExcessSessions(userSessionsKey(oldTokenData.userId()));
+        return rawNewToken;
+    }
+
+    private String writeJson(RefreshTokenData data) {
+        try {
+            return objectMapper.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Cannot serialize refresh token data", e);
+        }
     }
 
     public String getUserIdFromToken(String rawToken) {
@@ -121,6 +155,16 @@ public class RefreshTokenService {
     private void revokeSingle(String tokenHash, RefreshTokenData data) {
         redis.delete(tokenKey(tokenHash));
         redis.opsForZSet().remove(userSessionsKey(data.userId()), tokenHash);
+    }
+
+    private void revokeFamily(String familyId, String currentHeadHash, String fallbackUserId) {
+        if (currentHeadHash != null) {
+            RefreshTokenData headData = findTokenData(currentHeadHash);
+            String userId = headData != null ? headData.userId() : fallbackUserId;
+            redis.opsForZSet().remove(userSessionsKey(userId), currentHeadHash);
+            redis.delete(tokenKey(currentHeadHash));
+        }
+        redis.delete(familyKey(familyId));
     }
 
     private void deleteSession(String tokenHash, RefreshTokenData data) {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.filipchyla.shopapi.auth.dto.RefreshTokenData;
 import io.github.filipchyla.shopapi.auth.exception.InvalidRefreshTokenException;
+import io.github.filipchyla.shopapi.auth.exception.RefreshTokenReuseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -38,6 +40,8 @@ class RefreshTokenServiceTest {
     private ValueOperations<String, String> valueOperations;
     @Mock
     private ZSetOperations<String, String> zSetOperations;
+    @Mock
+    private RedisScript<String> rotateRefreshTokenScript;
 
     private RefreshTokenService refreshTokenService;
 
@@ -53,7 +57,7 @@ class RefreshTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        refreshTokenService = new RefreshTokenService(redis, objectMapper);
+        refreshTokenService = new RefreshTokenService(rotateRefreshTokenScript, redis, objectMapper);
 
         ReflectionTestUtils.setField(refreshTokenService, "expirationMs", EXPIRATION_MS);
         ReflectionTestUtils.setField(refreshTokenService, "maxSessionsPerUser", MAX_SESSIONS);
@@ -187,14 +191,18 @@ class RefreshTokenServiceTest {
         void shouldRevokeOldTokenAndCreateNewTokenInSameFamily() throws Exception {
             String rawOldToken = "old-refresh-token";
             String oldHash = hash(rawOldToken);
-            String newJson = "new-json";
 
             when(valueOperations.get(tokenKey(oldHash)))
                     .thenReturn("old-json");
             when(objectMapper.readValue("old-json", RefreshTokenData.class))
                     .thenReturn(tokenData(DEFAULT_FAMILY_ID));
             when(objectMapper.writeValueAsString(any(RefreshTokenData.class)))
-                    .thenReturn(newJson);
+                    .thenReturn("new-json");
+            when(redis.execute(
+                    eq(rotateRefreshTokenScript),
+                    anyList(),
+                    any(), any(), any(), any(), any()
+            )).thenReturn("OK");
             when(zSetOperations.zCard(sessionsKey()))
                     .thenReturn(1L);
 
@@ -203,12 +211,45 @@ class RefreshTokenServiceTest {
             assertNotNull(newToken);
             assertNotEquals(rawOldToken, newToken);
 
-            verify(redis).delete(tokenKey(oldHash));
-            verify(zSetOperations).remove(sessionsKey(), oldHash);
+            ArgumentCaptor<List<String>> keysCaptor = ArgumentCaptor.forClass(List.class);
+            verify(redis).execute(
+                    eq(rotateRefreshTokenScript),
+                    keysCaptor.capture(),
+                    eq(oldHash), anyString(), eq("new-json"), anyString(), anyString()
+            );
 
-            verify(valueOperations).set(startsWith(TOKEN_KEY_PREFIX), eq(newJson), any());
-            verify(zSetOperations).add(eq(sessionsKey()), anyString(), anyDouble());
-            verify(valueOperations).set(eq(familyKey(DEFAULT_FAMILY_ID)), anyString(), any());
+            List<String> keys = keysCaptor.getValue();
+            assertEquals(familyKey(DEFAULT_FAMILY_ID), keys.get(0));
+            assertEquals(tokenKey(oldHash), keys.get(1));
+            assertEquals(sessionsKey(), keys.get(3));
+        }
+
+        @Test
+        void shouldRevokeFamilyWhenOldTokenIsNotFamilyHead() throws JsonProcessingException {
+            String rawOldToken = "old-refresh-token";
+            String oldHash = hash(rawOldToken);
+            String currentHeadHash = "some-other-hash";
+
+            when(valueOperations.get(tokenKey(oldHash))).thenReturn("old-json");
+            when(objectMapper.readValue("old-json", RefreshTokenData.class))
+                    .thenReturn(tokenData(DEFAULT_FAMILY_ID));
+            when(objectMapper.writeValueAsString(any(RefreshTokenData.class)))
+                    .thenReturn("new-json");
+            when(redis.execute(
+                    eq(rotateRefreshTokenScript),
+                    anyList(),
+                    any(), any(), any(), any(), any()
+            )).thenReturn(currentHeadHash);
+
+            when(valueOperations.get(tokenKey(currentHeadHash))).thenReturn("head-json");
+            when(objectMapper.readValue("head-json", RefreshTokenData.class))
+                    .thenReturn(tokenData(DEFAULT_FAMILY_ID));
+
+            assertThrows(RefreshTokenReuseException.class,
+                    () -> refreshTokenService.rotateToken(rawOldToken));
+
+            verify(redis).delete(tokenKey(currentHeadHash));
+            verify(redis).delete(familyKey(DEFAULT_FAMILY_ID));
         }
 
         @Test

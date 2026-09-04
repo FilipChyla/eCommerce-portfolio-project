@@ -1,6 +1,7 @@
 package io.github.filipchyla.shopapi.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
 import io.github.filipchyla.shopapi.role.Role;
 import io.github.filipchyla.shopapi.role.RoleName;
 import io.github.filipchyla.shopapi.role.RoleRepository;
@@ -18,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +47,8 @@ class UserIntegrationTest {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private RoleRepository roleRepository;
+    @MockitoBean
+    private RefreshTokenService refreshTokenService;
 
     private static final String EMAIL = "integration@example.com";
     private static final String PASSWORD = "Password123!";

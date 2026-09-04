@@ -1,6 +1,7 @@
 package io.github.filipchyla.shopapi.user;
 
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
+import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
 import io.github.filipchyla.shopapi.role.Role;
 import io.github.filipchyla.shopapi.role.RoleName;
 import io.github.filipchyla.shopapi.role.RoleRepository;
@@ -30,6 +31,8 @@ class UserServiceTest {
     private UserMapper userMapper;
     @Mock
     private RoleRepository roleRepository;
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks
     private UserService userService;

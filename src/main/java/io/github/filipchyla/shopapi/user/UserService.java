@@ -1,6 +1,7 @@
 package io.github.filipchyla.shopapi.user;
 
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
+import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
 import io.github.filipchyla.shopapi.role.Role;
 import io.github.filipchyla.shopapi.role.RoleName;
 import io.github.filipchyla.shopapi.role.RoleNotFoundException;
@@ -16,10 +17,10 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final RoleRepository roleRepository;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public User createUser(String email, String passwordHash) {
@@ -63,5 +64,6 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
         user.setEnabled(false);
+        refreshTokenService.revokeAllForUser(userId.toString());
     }
 }
