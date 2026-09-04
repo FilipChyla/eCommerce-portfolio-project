@@ -298,8 +298,8 @@ class ProductServiceCacheTest {
 
         @Bean
         ProductService productService(ProductRepository productRepository, CategoryService categoryService,
-                                      ProductMapper productMapper) {
-            return new ProductService(productRepository, categoryService, productMapper);
+                                      ProductMapper productMapper, CacheManager cacheManager) {
+            return new ProductService(productRepository, categoryService, productMapper, cacheManager);
         }
     }
 }

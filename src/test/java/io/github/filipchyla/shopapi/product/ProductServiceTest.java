@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -42,6 +44,8 @@ class ProductServiceTest {
     private CategoryService categoryService;
     @Mock
     private ProductMapper productMapper;
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private ProductService productService;
@@ -393,6 +397,8 @@ class ProductServiceTest {
                     .thenReturn(Optional.of(productEntity));
             when(productMapper.toProductResponse(productEntity))
                     .thenReturn(productResponse);
+            when(cacheManager.getCache("products"))
+                    .thenReturn(mock(Cache.class));
 
             // When
             ProductResponse result = productService.updateProduct(productId, request);
