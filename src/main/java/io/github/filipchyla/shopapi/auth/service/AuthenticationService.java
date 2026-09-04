@@ -26,15 +26,12 @@ public class AuthenticationService {
     private final RefreshTokenService refreshTokenService;
 
     public UserPrincipal register(RegisterRequest request) {
-        userService.createUser(
+        User user = userService.createUser(
                 request.email(),
                 passwordEncoder.encode(request.password())
         );
 
-        return authenticate(new AuthenticationRequest(
-                request.email(),
-                request.password()
-        ));
+        return new UserPrincipal(user);
     }
 
     public UserPrincipal authenticate(AuthenticationRequest request) {
