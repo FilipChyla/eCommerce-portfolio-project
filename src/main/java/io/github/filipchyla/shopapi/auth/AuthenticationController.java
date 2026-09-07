@@ -1,16 +1,11 @@
 package io.github.filipchyla.shopapi.auth;
 
 import io.github.filipchyla.shopapi.auth.dto.AuthenticationRequest;
-import io.github.filipchyla.shopapi.auth.dto.AuthenticationResponse;
+import io.github.filipchyla.shopapi.auth.dto.AccessTokenData;
+import io.github.filipchyla.shopapi.auth.dto.AuthenticationTokensData;
 import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
-import io.github.filipchyla.shopapi.auth.exception.UserDisabledException;
-import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
-import io.github.filipchyla.shopapi.auth.service.JwtService;
-import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
-import io.github.filipchyla.shopapi.user.User;
-import io.github.filipchyla.shopapi.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,8 +18,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.UUID;
-
 
 
 @Tag(name = "Authentication", description = "Operations related to authentication and refresh tokens lifecycle")
@@ -32,68 +25,46 @@ import java.util.UUID;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
-    private final AuthenticationService authenticationService;
-    private final JwtService jwtService;
-    private final RefreshTokenService refreshTokenService;
-    private final RefreshTokenCookieFactory cookieFactory;
-    private final UserService userService;
+    private final AuthenticationFacade authenticationFacade;
 
     @Operation(
             summary = "Register new account",
             description = "Create new account and return tokens"
     )
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@Valid @RequestBody RegisterRequest request) {
-        UserPrincipal userPrincipal = authenticationService.register(request);
-
-        UUID userId = userPrincipal.user().getId();
-
-        String accessToken = jwtService.generateToken(userPrincipal);
-        String refreshToken = refreshTokenService.createNewToken(userId.toString());
-
-        ResponseCookie cookie = cookieFactory.create(refreshToken);
+    public ResponseEntity<AccessTokenData> register(@Valid @RequestBody RegisterRequest request) {
+        AuthenticationTokensData data = authenticationFacade.registerUserAndReturnTokens(request);
 
         URI location = URI.create("/api/v1/user/me");
 
         return ResponseEntity.created(location)
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new AuthenticationResponse(accessToken));
+                .header(HttpHeaders.SET_COOKIE, data.refreshTokenCookie().toString())
+                .body(data.accessToken());
     }
 
     @Operation(
             summary = "Authenticate user"
     )
     @PostMapping("/authenticate")
-    public ResponseEntity<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
-        UserPrincipal userPrincipal = authenticationService.authenticate(request);
-        UUID userId = userPrincipal.user().getId();
+    public ResponseEntity<AccessTokenData> authenticate(@Valid @RequestBody AuthenticationRequest request) {
+        AuthenticationTokensData data = authenticationFacade.authenticateUserAndReturnTokens(request);
 
-        String accessToken = jwtService.generateToken(userPrincipal);
-        String refreshToken = refreshTokenService.createNewToken(userId.toString());
-
-        ResponseCookie cookie = cookieFactory.create(refreshToken);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new AuthenticationResponse(accessToken));
+                .header(HttpHeaders.SET_COOKIE, data.refreshTokenCookie().toString())
+                .body(data.accessToken());
     }
 
     @Operation(
             summary = "Refresh jwt token"
     )
     @PostMapping("/refresh")
-    public ResponseEntity<AuthenticationResponse> refresh(
+    public ResponseEntity<AccessTokenData> refresh(
             @CookieValue(name = "${app.refresh-token.cookie-name}") String rawRefreshToken) {
-        UserPrincipal userPrincipal = getPrincipalFromToken(rawRefreshToken);
-        if (!userPrincipal.isEnabled()) throw new UserDisabledException("Account is deactivated");
-
-        String newRefreshToken = refreshTokenService.rotateToken(rawRefreshToken);
-
-        String accessToken = jwtService.generateToken(userPrincipal);
-        ResponseCookie cookie = cookieFactory.create(newRefreshToken);
+        AuthenticationTokensData data = authenticationFacade.refreshToken(rawRefreshToken);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new AuthenticationResponse(accessToken));
+                .header(HttpHeaders.SET_COOKIE, data.refreshTokenCookie().toString())
+                .body(data.accessToken());
     }
 
     @Operation(
@@ -102,12 +73,10 @@ public class AuthenticationController {
     @PostMapping("/logout")
     public ResponseEntity<MessageResponse> logout(
             @CookieValue(name = "${app.refresh-token.cookie-name}", required = false) String rawRefreshToken) {
+        ResponseCookie cookie = authenticationFacade.revokeSingleForUser(rawRefreshToken);
 
-        if (rawRefreshToken != null) {
-            refreshTokenService.revokeToken(rawRefreshToken);
-        }
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpired().toString())
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(new MessageResponse("User logged out successfully"));
     }
 
@@ -117,15 +86,10 @@ public class AuthenticationController {
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/logout-all")
     public ResponseEntity<MessageResponse> logoutAll(@AuthenticationPrincipal UserPrincipal principal) {
-        refreshTokenService.revokeAllForUser(principal.user().getId().toString());
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpired().toString())
-                .body(new MessageResponse("User logged out from all devices successfully"));
-    }
+        ResponseCookie cookie = authenticationFacade.revokeAllTokensForUser(principal);
 
-    private UserPrincipal getPrincipalFromToken(String newRefreshToken) {
-        String userId = refreshTokenService.getUserIdFromToken(newRefreshToken);
-        User user = userService.getUserEntity(UUID.fromString(userId));
-        return new UserPrincipal(user);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(new MessageResponse("User logged out from all devices successfully"));
     }
 }

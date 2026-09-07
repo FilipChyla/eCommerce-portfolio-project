@@ -50,17 +50,15 @@ class AuthenticationServiceTest {
         RegisterRequest request = new RegisterRequest(EMAIL, RAW_PASSWORD);
         User user = new User();
         user.setEmail(request.email());
-        UserPrincipal userPrincipal = new UserPrincipal(user);
-        Authentication authentication = mock(Authentication.class);
+
         when(passwordEncoder.encode(request.password())).thenReturn(ENCODED_PASSWORD);
-        when(authenticationManager.authenticate(any())).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(userPrincipal);
+        when(userService.createUser(request.email(), ENCODED_PASSWORD)).thenReturn(user);
 
         // When
         UserPrincipal response = authenticationService.register(request);
 
         // Then
-        assertThat(response).isEqualTo(userPrincipal);
+        assertThat(response.user()).isEqualTo(user);
         verify(passwordEncoder).encode(request.password());
         verify(userService).createUser(request.email(), ENCODED_PASSWORD);
 

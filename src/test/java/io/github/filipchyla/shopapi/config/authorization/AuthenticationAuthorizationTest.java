@@ -1,10 +1,7 @@
 package io.github.filipchyla.shopapi.config.authorization;
 
-import io.github.filipchyla.shopapi.auth.RefreshTokenCookieFactory;
+import io.github.filipchyla.shopapi.auth.AuthenticationFacade;
 import io.github.filipchyla.shopapi.auth.AuthenticationController;
-import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
-import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
-import io.github.filipchyla.shopapi.user.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -19,13 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class AuthenticationAuthorizationTest extends AuthorizationTest{
     @MockitoBean
-    private UserService userService;
-    @MockitoBean
-    private AuthenticationService authenticationService;
-    @MockitoBean
-    private RefreshTokenService refreshTokenService;
-    @MockitoBean
-    private RefreshTokenCookieFactory refreshTokenCookieFactory;
+    private AuthenticationFacade authenticationFacade;
 
     @Test
     void register_IsAccessible_WithoutAuthentication() throws Exception {
