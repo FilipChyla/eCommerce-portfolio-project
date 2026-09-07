@@ -1,16 +1,15 @@
 package io.github.filipchyla.shopapi.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.filipchyla.shopapi.auth.dto.AccessTokenData;
 import io.github.filipchyla.shopapi.auth.dto.AuthenticationRequest;
+import io.github.filipchyla.shopapi.auth.dto.AuthenticationTokensData;
 import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
 import io.github.filipchyla.shopapi.auth.exception.EmailTakenException;
 import io.github.filipchyla.shopapi.auth.exception.InvalidRefreshTokenException;
-import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.auth.service.JwtService;
-import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.user.User;
-import io.github.filipchyla.shopapi.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,24 +39,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @TestPropertySource(properties = "app.refresh-token.cookie-name=refreshToken")
 class AuthenticationControllerTest {
-
     @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private AuthenticationService authenticationService;
-    @MockitoBean
     private JwtService jwtService;
     @MockitoBean
-    private RefreshTokenService refreshTokenService;
-    @MockitoBean
-    private RefreshTokenCookieFactory cookieFactory;
-    @MockitoBean
-    private UserService userService;
+    private AuthenticationFacade authenticationFacade;
 
-    private User user;
     private UserPrincipal userPrincipal;
 
     private static final String VALID_EMAIL = "tes@email.com";
@@ -68,7 +59,7 @@ class AuthenticationControllerTest {
 
     @BeforeEach
     void setUp() {
-        user = new User();
+        User user = new User();
         user.setId(UUID.randomUUID());
         userPrincipal = new UserPrincipal(user);
     }
@@ -77,17 +68,17 @@ class AuthenticationControllerTest {
     class RegisterRequestTest {
         @Test
         void register_ShouldReturnAccessTokenAndSetRefreshCookie_WhenRequestIsValid() throws Exception {
+            // Given
             RegisterRequest request = new RegisterRequest(VALID_EMAIL, VALID_PASSWORD);
             ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, REFRESH_TOKEN)
                     .httpOnly(true)
                     .path("/")
                     .build();
+            AuthenticationTokensData tokensData = new AuthenticationTokensData(new AccessTokenData(JWT_TOKEN), cookie);
 
-            when(authenticationService.register(any(RegisterRequest.class))).thenReturn(userPrincipal);
-            when(jwtService.generateToken(userPrincipal)).thenReturn(JWT_TOKEN);
-            when(refreshTokenService.createNewToken(user.getId().toString())).thenReturn(REFRESH_TOKEN);
-            when(cookieFactory.create(REFRESH_TOKEN)).thenReturn(cookie);
+            when(authenticationFacade.registerUserAndReturnTokens(any(RegisterRequest.class))).thenReturn(tokensData);
 
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/register")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -98,17 +89,16 @@ class AuthenticationControllerTest {
                     .andExpect(cookie().httpOnly(COOKIE_NAME, true))
                     .andExpect(cookie().path(COOKIE_NAME, "/"));
 
-            verify(authenticationService).register(any(RegisterRequest.class));
-            verify(jwtService).generateToken(userPrincipal);
-            verify(refreshTokenService).createNewToken(user.getId().toString());
+            verify(authenticationFacade).registerUserAndReturnTokens(any(RegisterRequest.class));
         }
 
         @Test
         void register_ShouldReturnConflict_WhenEmailIsTaken() throws Exception {
+            // Given
             RegisterRequest request = new RegisterRequest(VALID_EMAIL, VALID_PASSWORD);
+            when(authenticationFacade.registerUserAndReturnTokens(request)).thenThrow(EmailTakenException.class);
 
-            when(authenticationService.register(request)).thenThrow(EmailTakenException.class);
-
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/register")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -117,19 +107,23 @@ class AuthenticationControllerTest {
 
         @Test
         void register_ShouldReturnBadRequest_WhenEmailIsInvalid() throws Exception {
+            // Given
             RegisterRequest request = new RegisterRequest("invalid-email", VALID_PASSWORD);
 
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/register")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
-            verifyNoInteractions(authenticationService);
+            verifyNoInteractions(authenticationFacade);
         }
 
         @Test
         void register_ShouldReturnBadRequest_WhenPasswordIsWeak() throws Exception {
+            // Given
             RegisterRequest request = new RegisterRequest(VALID_EMAIL, "pass");
 
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/register")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -138,13 +132,15 @@ class AuthenticationControllerTest {
                     .andExpect(jsonPath("$.message").value(containsString("Password must contain a digit")))
                     .andExpect(jsonPath("$.message").value(containsString("Password must contain a special character")))
                     .andExpect(jsonPath("$.message").value(containsString("Password must be at least 8 characters")));
-            verifyNoInteractions(authenticationService);
+            verifyNoInteractions(authenticationFacade);
         }
 
         @Test
         void register_ShouldReturnBadRequest_WhenBodyInvalid() throws Exception {
+            // Given
             String invalidJson = "{}";
 
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/register")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidJson))
@@ -156,17 +152,17 @@ class AuthenticationControllerTest {
     class AuthenticationRequestTest {
         @Test
         void authenticate_ShouldReturnAccessTokenAndSetRefreshCookie_WhenRequestIsValid() throws Exception {
+            // Given
             AuthenticationRequest request = new AuthenticationRequest(VALID_EMAIL, VALID_PASSWORD);
             ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, REFRESH_TOKEN)
                     .httpOnly(true)
                     .path("/")
                     .build();
+            AuthenticationTokensData tokensData = new AuthenticationTokensData(new AccessTokenData(JWT_TOKEN), cookie);
 
-            when(authenticationService.authenticate(any(AuthenticationRequest.class))).thenReturn(userPrincipal);
-            when(jwtService.generateToken(userPrincipal)).thenReturn(JWT_TOKEN);
-            when(refreshTokenService.createNewToken(user.getId().toString())).thenReturn(REFRESH_TOKEN);
-            when(cookieFactory.create(REFRESH_TOKEN)).thenReturn(cookie);
+            when(authenticationFacade.authenticateUserAndReturnTokens(any(AuthenticationRequest.class))).thenReturn(tokensData);
 
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/authenticate")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -180,10 +176,11 @@ class AuthenticationControllerTest {
 
         @Test
         void authenticate_ShouldReturnUnauthorized_WhenCredentialsAreWrong() throws Exception {
+            // Given
             AuthenticationRequest request = new AuthenticationRequest("invalid@mail.com", "VeryWrongPassword1!");
+            when(authenticationFacade.authenticateUserAndReturnTokens(request)).thenThrow(BadCredentialsException.class);
 
-            when(authenticationService.authenticate(request)).thenThrow(BadCredentialsException.class);
-
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/authenticate")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -192,15 +189,17 @@ class AuthenticationControllerTest {
 
         @Test
         void authenticate_ShouldReturnBadRequest_WhenCredentialsAreInvalid() throws Exception {
+            // Given
             AuthenticationRequest request = new AuthenticationRequest("", "");
 
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/authenticate")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value(containsString("Password should not be blank")))
                     .andExpect(jsonPath("$.message").value(containsString("Email should not be blank")));
-            verifyNoInteractions(authenticationService);
+            verifyNoInteractions(authenticationFacade);
         }
     }
 
@@ -208,19 +207,18 @@ class AuthenticationControllerTest {
     class RefreshTokenCookieTest {
         @Test
         void refresh_ShouldRotateTokenAndReturnNewAccessToken_WhenRequestIsValid() throws Exception {
+            // Given
             String oldRawToken = "old-raw-refresh-token";
             String newRawToken = "new-raw-refresh-token";
             ResponseCookie newCookie = ResponseCookie.from(COOKIE_NAME, newRawToken)
                     .httpOnly(true)
                     .path("/")
                     .build();
+            AuthenticationTokensData tokensData = new AuthenticationTokensData(new AccessTokenData("new-access-token"), newCookie);
 
-            when(refreshTokenService.rotateToken(oldRawToken)).thenReturn(newRawToken);
-            when(refreshTokenService.getUserIdFromToken(oldRawToken)).thenReturn(user.getId().toString());
-            when(userService.getUserEntity(user.getId())).thenReturn(user);
-            when(jwtService.generateToken(any(UserPrincipal.class))).thenReturn("new-access-token");
-            when(cookieFactory.create(newRawToken)).thenReturn(newCookie);
+            when(authenticationFacade.refreshToken(oldRawToken)).thenReturn(tokensData);
 
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/refresh")
                             .cookie(new jakarta.servlet.http.Cookie(COOKIE_NAME, oldRawToken)))
                     .andExpect(status().isOk())
@@ -230,31 +228,29 @@ class AuthenticationControllerTest {
                     .andExpect(cookie().httpOnly(COOKIE_NAME, true))
                     .andExpect(cookie().path(COOKIE_NAME, "/"));
 
-            verify(refreshTokenService).rotateToken(oldRawToken);
+            verify(authenticationFacade).refreshToken(oldRawToken);
         }
 
         @Test
-        void refresh_ShouldNotRotateTokenAndReturnNewAccessToken_WhenCookieIsWrongOrExpired() throws Exception {
+        void refresh_ShouldReturnUnauthorized_WhenCookieIsWrongOrExpired() throws Exception {
+            // Given
             String oldRawToken = "old-raw-refresh-token";
+            when(authenticationFacade.refreshToken(oldRawToken)).thenThrow(InvalidRefreshTokenException.class);
 
-            when(refreshTokenService.getUserIdFromToken(oldRawToken)).thenReturn(user.getId().toString());
-            when(refreshTokenService.rotateToken(oldRawToken)).thenThrow(InvalidRefreshTokenException.class);
-            when(userService.getUserEntity(user.getId())).thenReturn(user);
-
-
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/refresh")
                             .cookie(new jakarta.servlet.http.Cookie(COOKIE_NAME, oldRawToken)))
                     .andExpect(status().isUnauthorized());
 
-            verify(refreshTokenService).rotateToken(oldRawToken);
-            verify(jwtService, never()).generateToken(any());
-            verify(cookieFactory, never()).create(any());
+            verify(authenticationFacade).refreshToken(oldRawToken);
         }
 
         @Test
         void refresh_ShouldReturnBadRequest_WhenCookieMissing() throws Exception {
+            // Given & When & Then
             mockMvc.perform(post("/api/v1/auth/refresh"))
                     .andExpect(status().isBadRequest());
+            verifyNoInteractions(authenticationFacade);
         }
     }
 
@@ -262,14 +258,16 @@ class AuthenticationControllerTest {
     class LogoutTest {
         @Test
         void logout_ShouldRevokeTokenAndClearCookie_WhenCookiePresent() throws Exception {
+            // Given
             String rawToken = REFRESH_TOKEN;
             ResponseCookie expiredCookie = ResponseCookie.from(COOKIE_NAME, "")
                     .maxAge(0)
                     .path("/")
                     .build();
 
-            when(cookieFactory.createExpired()).thenReturn(expiredCookie);
+            when(authenticationFacade.revokeSingleForUser(rawToken)).thenReturn(expiredCookie);
 
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/logout")
                             .cookie(new jakarta.servlet.http.Cookie(COOKIE_NAME, rawToken)))
                     .andExpect(status().isOk())
@@ -277,45 +275,48 @@ class AuthenticationControllerTest {
                     .andExpect(cookie().maxAge(COOKIE_NAME, 0))
                     .andExpect(cookie().path(COOKIE_NAME, "/"));
 
-            verify(refreshTokenService).revokeToken(rawToken);
+            verify(authenticationFacade).revokeSingleForUser(rawToken);
         }
 
         @Test
-        void logout_ShouldNotRevoke_WhenCookieMissing() throws Exception {
+        void logout_ShouldStillClearCookie_WhenCookieMissing() throws Exception {
+            // Given
             ResponseCookie expiredCookie = ResponseCookie.from(COOKIE_NAME, "")
                     .maxAge(0)
                     .path("/")
                     .build();
 
-            when(cookieFactory.createExpired()).thenReturn(expiredCookie);
+            when(authenticationFacade.revokeSingleForUser(null)).thenReturn(expiredCookie);
 
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/logout"))
                     .andExpect(status().isOk())
                     .andExpect(cookie().exists(COOKIE_NAME))
                     .andExpect(cookie().maxAge(COOKIE_NAME, 0));
 
-            verify(refreshTokenService, org.mockito.Mockito.never()).revokeToken(org.mockito.ArgumentMatchers.anyString());
+            verify(authenticationFacade).revokeSingleForUser(null);
         }
-
 
         @Test
         void logoutAll_ShouldRevokeAllTokensForUser_WhenUserIsAuthenticated() throws Exception {
+            // Given
             ResponseCookie expiredCookie = ResponseCookie.from(COOKIE_NAME, "")
                     .maxAge(0)
                     .path("/")
                     .build();
 
-            Authentication auth = new UsernamePasswordAuthenticationToken(new UserPrincipal(user), null, List.of());
+            Authentication auth = new UsernamePasswordAuthenticationToken(userPrincipal, null, List.of());
             SecurityContextHolder.getContext().setAuthentication(auth);
 
-            when(cookieFactory.createExpired()).thenReturn(expiredCookie);
+            when(authenticationFacade.revokeAllTokensForUser(userPrincipal)).thenReturn(expiredCookie);
 
+            // When & Then
             mockMvc.perform(post("/api/v1/auth/logout-all"))
                     .andExpect(status().isOk())
                     .andExpect(cookie().exists(COOKIE_NAME))
                     .andExpect(cookie().maxAge(COOKIE_NAME, 0));
 
-            verify(refreshTokenService).revokeAllForUser(user.getId().toString());
+            verify(authenticationFacade).revokeAllTokensForUser(userPrincipal);
         }
     }
 }
