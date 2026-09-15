@@ -5,7 +5,7 @@ import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
 import io.github.filipchyla.shopapi.product.dto.ProductResponse;
 import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;
 import io.github.filipchyla.shopapi.product.dto.UpdateStockRequest;
-import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
+import io.github.filipchyla.shopapi.web.dto.MessageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

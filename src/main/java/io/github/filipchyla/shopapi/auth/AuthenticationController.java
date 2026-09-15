@@ -5,7 +5,7 @@ import io.github.filipchyla.shopapi.auth.dto.AccessTokenData;
 import io.github.filipchyla.shopapi.auth.dto.AuthenticationTokensData;
 import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
-import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
+import io.github.filipchyla.shopapi.web.dto.MessageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
