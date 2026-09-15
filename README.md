@@ -1,66 +1,58 @@
 # eCommerce Portfolio Project
 
-Production-inspired e-commerce REST API built with Java, Spring Boot, PostgreSQL, JWT, Flyway, and Docker.
+A production-inspired e-commerce REST API built with **Java 21 and Spring Boot**.
 
-The project is being developed as a backend portfolio project with a focus on practical backend development, security, database design, testing, containerization, and maintainable application architecture.
+The project is being developed as a backend portfolio project with a focus on practical backend development, security,
+database design, testing, containerization, and maintainable application architecture.
 
 > This project is actively under development.
 
 ---
 
-## Current Features
+## Why this project?
 
-### Authentication & Authorization
+This project is my main backend portfolio project and is intended to demonstrate practical skills relevant to a
+**Java / Spring Boot Backend Developer** role.
 
-* User registration
-* User login
-* JWT-based authentication
-* Refresh tokens
-* Role-based authorization (USER, ADMIN)
-* Secure password hashing
-* Protected API endpoints
+The main focus areas are:
 
-### User Management
+- Spring Boot application development
+- REST API design
+- authentication and authorization
+- secure session and token management
+- relational database design
+- Redis-based data storage
+- caching
+- validation and error handling
+- automated testing
+- Docker-based development
+- CI/CD
+- maintainable application architecture
 
-* Update user profile information
-* Password change
-* Account deletion
-* Input validation
-* Global exception handling
-
-### Database & Persistence
-
-* PostgreSQL database
-* Redis
-* Spring Data JPA
-* Hibernate
-* Flyway database migrations
-* UUID-based entity identifiers
-
-### Development & Infrastructure
-
-* Docker-based PostgreSQL development environment
-* Docker Compose
-* Environment-based configuration
-* Spring Boot Docker Compose integration
+The project focuses on building a solid backend foundation and making deliberate
+engineering decisions to improve scalability, security, and maintainability.
 
 ---
 
 # Tech Stack
 
-| Category           | Technology                  |
-|--------------------|-----------------------------|
-| Language           | Java 21                     |
-| Framework          | Spring Boot                 |
-| Build Tool         | Maven                       |
-| Database           | PostgreSQL and Redis        |
-| ORM                | Spring Data JPA / Hibernate |
-| Security           | Spring Security + JWT       |
-| Validation         | Jakarta Validation          |
-| Testing            | JUnit and testcontainers    |
-| Database Migration | Flyway                      |
-| Object Mapping     | MapStruct                   |
-| Containerization   | Docker & Docker Compose     |
+| Category                        | Technology                                |
+|---------------------------------|-------------------------------------------|
+| Language                        | Java 21                                   |
+| Framework                       | Spring Boot                               |
+| Build Tool                      | Maven                                     |
+| Database                        | PostgreSQL                                |
+| In-memory / distributed storage | Redis                                     |
+| ORM                             | Spring Data JPA / Hibernate               |
+| Security                        | Spring Security + JWT                     |
+| Validation                      | Jakarta Bean Validation                   |
+| Database Migrations             | Flyway                                    |
+| Object Mapping                  | MapStruct                                 |
+| Caching                         | Spring Cache / Caffeine / Redis           |
+| Testing                         | JUnit 5, Mockito, MockMvc, Testcontainers |
+| Containerization                | Docker / Docker Compose                   |
+| API Documentation               | OpenAPI / Swagger                         |
+| CI                              | GitHub Actions                            |
 
 ---
 
@@ -84,7 +76,6 @@ src/main/java/io/github/filipchyla/shopapi
 │   ├── repository/
 │   └── service/
 ├── security/
-├── exception/
 └── config/
 ```
 
@@ -92,28 +83,75 @@ This structure helps keep related functionality together and allows the applicat
 
 ---
 
-# Security
+## Module overview
 
-The application uses Spring Security with JWT-based authentication.
+### security
+Contains the application's security infrastructure, including custom filters, and authentication-related components.
 
-### Access Tokens
+### role
+Provides role definitions and persistence used for role-based authorization.
 
-* Short-lived JWT access tokens
-* Access tokens are not stored server-side
-* Access tokens are sent using the `Authorization: Bearer <token>` header
+### user
+Provides endpoints for managing the authenticated user's profile and account.
 
-### Refresh Tokens
+| Method   | Endpoint                   | Description                                   | Authentication |
+|----------|----------------------------|-----------------------------------------------|----------------|
+| `GET`    | `/api/v1/user/me`          | Get authenticated user's profile information  | Required       |
+| `PATCH`  | `/api/v1/user/me`          | Update the authenticated user's profile       | Required       |
+| `PATCH`  | `/api/v1/user/me/password` | Change authenticated user's password          | Required       |
+| `DELETE` | `/api/v1/user/me`          | Disable authenticated user's account          | Required       |
 
-* Refresh tokens are stored server-side in Redis
-* Refresh tokens are delivered using secure HttpOnly cookies
-* Refresh token rotation is used
-* Revoked refresh tokens cannot be reused
-* Refresh token sessions are limited per user
+### auth
+Handles user registration and authentication using short-lived JWT access tokens
+and Redis-backed refresh token sessions. Refresh token sessions are limited per user,
+and token reuse is prevented.
 
-### Password Security
+| Method | Endpoint                    | Description                                 | Authentication         |
+|--------|-----------------------------|---------------------------------------------|------------------------|
+| `POST` | `/api/v1/auth/register`     | Register a new user                         | Not required           |
+| `POST` | `/api/v1/auth/authenticate` | Authenticate a user                         | Not required           |
+| `POST` | `/api/v1/auth/refresh`      | Rotate refresh token                        | Refresh token required |
+| `POST` | `/api/v1/auth/logout`       | Invalidate given refresh token              | Refresh token required |
+| `POST` | `/api/v1/auth/logout-all`   | Invalidate all of the user's refresh tokens | Required               |
 
-* Passwords are hashed using a strong password hashing algorithm
-* Raw passwords are never stored in the database
+### product
+Provides product and category management, including public product browsing,
+administrative operations, filtering, pagination, and caching.
+
+| Method   | Endpoint                        | Description              | Authentication      |
+|----------|---------------------------------|--------------------------|---------------------|
+| `GET`    | `/api/v1/categories`            | Get categories tree      | Not required        |
+| `POST`   | `/api/v1/admin/categories`      | Add new category         | Admin role required |
+| `PATCH`  | `/api/v1/admin/categories/{id}` | Update existing category | Admin role required |
+| `DELETE` | `/api/v1/admin/categories/{id}` | Delete category          | Admin role required |
+
+| Method   | Endpoint                            | Description                                    | Authentication      |
+|----------|-------------------------------------|------------------------------------------------|---------------------|
+| `GET`    | `/api/v1/products`                  | Get products list, can filter, paged           | Not required        |
+| `GET`    | `/api/v1/products/{id}`             | Get single product info                        | Not required        |
+| `POST`   | `/api/v1/admin/products`            | Add new product                                | Admin role required |
+| `PATCH`  | `/api/v1/admin/products/{id}`       | Update existing product                        | Admin role required |
+| `PATCH`  | `/api/v1/admin/products/{id}/stock` | Update quantity of product by given difference | Admin role required |
+| `DELETE` | `/api/v1/admin/products/{id}`       | Delete product                                 | Admin role required |
+
+### cart
+Provides shopping cart functionality for both authenticated and guest users.
+Guest carts are stored in Redis and can be merged into the authenticated user's cart.
+
+| Method   | Endpoint                         | Description                                | Authentication |
+|----------|----------------------------------|--------------------------------------------|----------------|
+| `GET`    | `/api/v1/cart`                   | Get the cart with all its items            | Not required   |
+| `DELETE` | `/api/v1/cart`                   | Clear all items in cart                    | Not required   |
+| `POST`   | `/api/v1/cart/items`             | Add product to cart                        | Not required   |
+| `PATCH`  | `/api/v1/cart/items/{productId}` | Change product quantity in cart            | Not required   |
+| `DELETE` | `/api/v1/cart/items/{productId}` | Delete product from cart                   | Not required   |
+| `POST`   | `/api/v1/cart/merge`             | Merge guest shopping cart with user's cart | Required       |
+
+### config 
+Module for handling configuration settings and environment variables.
+
+### exception
+Module for handling exceptions and errors in the application.
 
 ---
 
@@ -140,47 +178,43 @@ cd eCommerce-portfolio-project
 
 Create a `.env` file in the project root using `.env.example` as a template.
 
-Example:
-
-```env
-POSTGRES_DB=shop
-POSTGRES_USER=your_user
-POSTGRES_PASSWORD=your_password
-
-DB_PORT=5432
-
-JWT_SECRET=a_very_long_random_string_for_signing_tokens
-JWT_EXPIRATION_TIME=3600000
-
-REDIS_HOST=localhost
-REDIS_PORT=6379
-```
-
 ---
 
-## Run with Docker
+## Run in Production-like Mode
 
-To start the complete application environment:
+The full Docker Compose setup runs the entire application stack in containers,
+including the Spring Boot application, PostgreSQL, and Redis.
 
 ```bash
 docker compose -f compose.full.yaml up --build
 ```
-
-To stop the containers:
-
+To stop the environment:
 ```bash
 docker compose -f compose.full.yaml down
 ```
 
+
 ---
 
-## Run from IntelliJ IDEA
+## Run in Development Mode
 
-The application can also be started directly from IntelliJ IDEA.
+The application can be run locally using the `dev` Spring profile.
 
-Spring Boot's Docker Compose integration can automatically start the required Docker Compose services, such as PostgreSQL, while the Spring Boot application itself is run by IntelliJ IDEA.
+Spring Boot's Docker Compose integration automatically starts the services
+defined in `compose.yaml`, such as PostgreSQL and Redis, while the application
+runs directly on the host machine.
 
-Make sure Docker Desktop is running before starting the application.
+Start the application with Maven:
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+On windows:
+```bash
+./mvnw spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+Docker must be running before starting the application.
 
 ---
 
@@ -194,59 +228,11 @@ No manual database schema setup is required.
 
 ---
 
-# API
-
-The API is organized around RESTful endpoints.
-
-## Authentication
-
-| Method | Endpoint                    | Description                         | Authentication          |
-| ------ |---------------------------- | ----------------------------------- | ----------------------- |
-| `POST` | `/api/v1/auth/register`     | Register a new user                 | Not required            |
-| `POST` | `/api/v1/auth/authenticate` | Authenticate a user                 | Not required            |
-| `POST` | `/api/v1/auth/refresh`      | Rotate refresh token                | Refresh token required  |
-| `POST` | `/api/v1/auth/logout`       | Invalidate given refresh token      | Refresh token required  |
-| `POST` | `/api/v1/auth/logout-all`   | Invalidate all user's refresh token | Required                |
-
-## User Management
-
-| Method   | Endpoint                   | Description                                   | Authentication |
-|----------|----------------------------|-----------------------------------------------|----------------|
-| `GET`    | `/api/v1/user/me`          | Get authenticated user's profile informations | Required       |
-| `PATCH`  | `/api/v1/user/me`          | Update the authenticated user's profile       | Required       |
-| `PATCH`  | `/api/v1/user/me/password` | Change authenticated user's password          | Required       |
-| `DELETE` | `/api/v1/user/me`          | Disable authenticated user's account          | Required       |
-
-## Category Management
-
-| Method   | Endpoint                  | Description              | Authentication      |
-|----------|---------------------------|--------------------------|---------------------|
-| `GET`    | `/api/v1/categories`      | Get categories tree      | Not required        |
-| `POST`   | `/api/v1/categories`      | Add new category         | Admin role required |
-| `PATCH`  | `/api/v1/categories/{id}` | Update existing category | Admin role required |
-| `DELETE` | `/api/v1/categories/{id}` | Delete category          | Admin role required |
-
-## Product Management
-
-| Method   | Endpoint                      | Description                                    | Authentication      |
-|----------|-------------------------------|------------------------------------------------|---------------------|
-| `GET`    | `/api/v1/products`            | Get products list, can filter, paged           | Not required        |
-| `GET`    | `/api/v1/products/{id}`       | Get single product info                        | Not required        |
-| `POST`   | `/api/v1/products`            | Add new product                                | Admin role required |
-| `PATCH`  | `/api/v1/products/{id}`       | Update existing product                        | Admin role required |
-| `PATCH`  | `/api/v1/products/{id}/stock` | Update quantity of product by given difference | Admin role required |
-| `DELETE` | `/api/v1/products/{id}`       | Delete product                                 | Admin role required |
-
-> The API documentation will be expanded as new features are implemented.
-
----
-
 # Roadmap
 
 ## Completed
 
-* [x] User registration
-* [x] User login
+* [x] User registration and login
 * [x] JWT authentication
 * [x] User profile management
 * [x] Input validation
@@ -260,46 +246,19 @@ The API is organized around RESTful endpoints.
 * [x] Rate limiting
 * [x] Basic product and category module
 * [x] API documentation
+* [x] Shopping cart
 
 ## In Progress
 
-* [ ] Shopping cart
+* [ ] Orders
+* [ ] Kafka integration
 
 ## Planned
 
-* [ ] Orders
 * [ ] Payment integration
 * [ ] Product reviews
 * [ ] Product search
 * [ ] Product images
-
----
-
-# Design Decisions
-
-This project intentionally uses several patterns and technologies commonly found in production Spring Boot applications:
-
-* Feature-based package structure
-* DTO pattern
-* MapStruct for object mapping
-* Service layer
-* Spring Data JPA
-* Flyway database migrations
-* Stateless JWT-based access token authentication
-* Global exception handling
-* Jakarta Bean Validation
-* Docker-based development environment
-* Automated testing
-
-The goal is to gradually develop a realistic backend system while documenting the architectural and technical decisions made during development.
-
----
-
-# Project Status
-
-This project is actively under development.
-
-The current focus is on building a solid foundation around authentication, user management, persistence, testing, and infrastructure before expanding into the core e-commerce functionality.
 
 ---
 
