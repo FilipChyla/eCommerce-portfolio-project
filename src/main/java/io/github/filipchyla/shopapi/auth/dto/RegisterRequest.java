@@ -1,6 +1,6 @@
 package io.github.filipchyla.shopapi.auth.dto;
 
-import io.github.filipchyla.shopapi.shared.validation.ValidPassword;
+import io.github.filipchyla.shopapi.user.validation.ValidPassword;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

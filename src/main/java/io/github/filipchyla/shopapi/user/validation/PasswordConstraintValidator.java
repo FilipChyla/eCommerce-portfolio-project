@@ -1,4 +1,4 @@
-package io.github.filipchyla.shopapi.shared.validation;
+package io.github.filipchyla.shopapi.user.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

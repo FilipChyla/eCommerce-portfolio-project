@@ -2,8 +2,8 @@ package io.github.filipchyla.shopapi.cart.service;
 
 import io.github.filipchyla.shopapi.cart.dto.*;
 import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
-import io.github.filipchyla.shopapi.shared.exception.BadRequestException;
-import io.github.filipchyla.shopapi.shared.exception.ConflictException;
+import io.github.filipchyla.shopapi.exception.base.BadRequestException;
+import io.github.filipchyla.shopapi.exception.base.ConflictException;
 import io.github.filipchyla.shopapi.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

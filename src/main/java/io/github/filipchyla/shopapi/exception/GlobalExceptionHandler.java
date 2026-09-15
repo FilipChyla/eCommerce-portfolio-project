@@ -1,10 +1,11 @@
-package io.github.filipchyla.shopapi.shared;
+package io.github.filipchyla.shopapi.exception;
 
-import io.github.filipchyla.shopapi.shared.dto.ErrorResponse;
-import io.github.filipchyla.shopapi.shared.exception.BadRequestException;
-import io.github.filipchyla.shopapi.shared.exception.ConflictException;
-import io.github.filipchyla.shopapi.shared.exception.NotFoundException;
-import io.github.filipchyla.shopapi.shared.exception.UnauthorizedException;
+import io.github.filipchyla.shopapi.exception.dto.ErrorResponse;
+import io.github.filipchyla.shopapi.exception.base.BadRequestException;
+import io.github.filipchyla.shopapi.exception.base.ConflictException;
+import io.github.filipchyla.shopapi.exception.base.NotFoundException;
+import io.github.filipchyla.shopapi.exception.base.UnauthorizedException;
+import jakarta.persistence.OptimisticLockException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -87,6 +88,16 @@ public class GlobalExceptionHandler {
                 Instant.now());
 
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(OptimisticLockException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDenied(OptimisticLockException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                Instant.now());
+
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)

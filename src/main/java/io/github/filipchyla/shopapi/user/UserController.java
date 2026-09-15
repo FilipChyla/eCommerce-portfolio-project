@@ -3,7 +3,7 @@ package io.github.filipchyla.shopapi.user;
 import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.security.UserPrincipal;
 import io.github.filipchyla.shopapi.user.dto.ChangePasswordRequest;
-import io.github.filipchyla.shopapi.shared.dto.MessageResponse;
+import io.github.filipchyla.shopapi.web.dto.MessageResponse;
 import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
 import io.github.filipchyla.shopapi.user.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;

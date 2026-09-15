@@ -1,4 +1,4 @@
-package io.github.filipchyla.shopapi.shared.dto;
+package io.github.filipchyla.shopapi.web.dto;
 
 
 import io.swagger.v3.oas.annotations.media.Schema;
