@@ -24,6 +24,7 @@ public class RefreshTokenService {
     private final RedisScript<String> rotateRefreshTokenScript;
     private final RedisTemplate<String, String> redis;
     private final ObjectMapper objectMapper;
+    private static final long ROTATED_TOKEN_TTL_MS = Duration.ofMinutes(10).toMillis();
 
     @Value("${app.refresh-token.expiration-ms}")
     private long expirationMs;
@@ -62,7 +63,8 @@ public class RefreshTokenService {
                 newHash,
                 newJson,
                 String.valueOf(expirationMs),
-                String.valueOf(Instant.now().toEpochMilli())
+                String.valueOf(Instant.now().toEpochMilli()),
+                String.valueOf(ROTATED_TOKEN_TTL_MS)
         );
 
         if (!"OK".equals(result)) {

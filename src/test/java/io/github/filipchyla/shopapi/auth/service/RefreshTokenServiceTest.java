@@ -201,7 +201,7 @@ class RefreshTokenServiceTest {
             when(redis.execute(
                     eq(rotateRefreshTokenScript),
                     anyList(),
-                    any(), any(), any(), any(), any()
+                    any(), any(), any(), any(), any(), any()
             )).thenReturn("OK");
             when(zSetOperations.zCard(sessionsKey()))
                     .thenReturn(1L);
@@ -215,7 +215,7 @@ class RefreshTokenServiceTest {
             verify(redis).execute(
                     eq(rotateRefreshTokenScript),
                     keysCaptor.capture(),
-                    eq(oldHash), anyString(), eq("new-json"), anyString(), anyString()
+                    eq(oldHash), anyString(), eq("new-json"), anyString(), anyString(), anyString()
             );
 
             List<String> keys = keysCaptor.getValue();
@@ -238,7 +238,7 @@ class RefreshTokenServiceTest {
             when(redis.execute(
                     eq(rotateRefreshTokenScript),
                     anyList(),
-                    any(), any(), any(), any(), any()
+                    any(), any(), any(), any(), any(), any()
             )).thenReturn(currentHeadHash);
 
             when(valueOperations.get(tokenKey(currentHeadHash))).thenReturn("head-json");
