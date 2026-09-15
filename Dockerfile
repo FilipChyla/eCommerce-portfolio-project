@@ -16,6 +16,12 @@ WORKDIR /app
 
 COPY --from=builder /build/target/*.jar app.jar
 
+RUN addgroup --system app && adduser --system --ingroup app app
+USER app
+
 EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
+CMD bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf "GET /actuator/health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && grep -q "\"status\":\"UP\"" <&3' || exit 1
 
 ENTRYPOINT ["java","-jar","app.jar"]
