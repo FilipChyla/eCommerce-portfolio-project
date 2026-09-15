@@ -53,7 +53,7 @@ public class SecurityConfiguration {
                 )
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/swagger-ui/**","/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**","/v3/api-docs/**", "/actuator/health/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/auth/logout-all").authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
