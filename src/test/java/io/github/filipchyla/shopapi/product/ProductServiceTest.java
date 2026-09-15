@@ -254,7 +254,7 @@ class ProductServiceTest {
         @Test
         void getProductById_ShouldReturnProductResponse_WhenProductExists() {
             // Given
-            when(productRepository.findById(productId))
+            when(productRepository.findByIdAndActiveTrue(productId))
                     .thenReturn(Optional.of(productEntity));
             when(productMapper.toProductResponse(productEntity))
                     .thenReturn(productResponse);
@@ -265,15 +265,12 @@ class ProductServiceTest {
             // Then
             assertThat(result).isEqualTo(productResponse);
 
-            verify(productRepository).findById(productId);
+            verify(productRepository).findByIdAndActiveTrue(productId);
             verify(productMapper).toProductResponse(productEntity);
         }
 
         @Test
         void getProductById_ShouldThrowNotFound_WhenProductDoesNotExist() {
-            // Given
-            when(productRepository.findById(productId))
-                    .thenReturn(Optional.empty());
 
             // When & Then
             assertThatThrownBy(() -> productService.getProductById(productId))

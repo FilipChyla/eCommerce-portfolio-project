@@ -23,6 +23,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -61,23 +63,20 @@ public class ProductService {
     @Transactional
     @CacheEvict(value = "products", key = "#id")
     public void deleteProduct(UUID id) {
-        Product product = findProductById(id);
+        Product product = findProductByIdOrThrow(id);
         product.setActive(false);
     }
 
     @Cacheable(value = "products", key = "#id")
     public ProductResponse getProductById(UUID id) {
-        Product product = findProductById(id);
-        if (!product.isActive()) {
-            throw new ProductNotFoundException("Product not found with id: " + id);
-        }
+        Product product = findActiveProductById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
         return productMapper.toProductResponse(product);
     }
 
     @CachePut(value = "products", key = "#id")
     @Transactional
     public ProductResponse adjustStock(UUID id, int delta) {
-        Product product = findProductById(id);
+        Product product = findProductByIdOrThrow(id);
         int currentStock = product.getStockQuantity();
 
         if (currentStock + delta < 0) {
@@ -90,7 +89,7 @@ public class ProductService {
 
     @Transactional
     public ProductResponse updateProduct(UUID id, @Valid UpdateProductRequest request) {
-        Product product = findProductById(id);
+        Product product = findProductByIdOrThrow(id);
 
         if (request.categoryId() != null){
             Category category = categoryService.getCategoryById(request.categoryId());
@@ -112,7 +111,19 @@ public class ProductService {
         return response;
     }
 
-    private Product findProductById(UUID id) {
+    private Product findProductByIdOrThrow(UUID id) {
         return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
+    }
+
+    public Optional<Product> findProductById(UUID id) {
+        return productRepository.findById(id);
+    }
+
+    public List<Product> findAllByIds(List<UUID> ids) {
+        return productRepository.findAllById(ids);
+    }
+
+    public Optional<Product> findActiveProductById(UUID id) {
+        return productRepository.findByIdAndActiveTrue(id);
     }
 }

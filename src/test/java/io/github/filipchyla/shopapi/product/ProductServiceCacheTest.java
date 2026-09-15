@@ -62,6 +62,7 @@ class ProductServiceCacheTest {
         Product product = new Product();
         product.setId(id);
         product.setStockQuantity(2);
+        product.setActive(true);
         return product;
     }
 
@@ -79,7 +80,7 @@ class ProductServiceCacheTest {
             UUID id = UUID.randomUUID();
             Product product = buildProduct(id);
 
-            when(productRepository.findById(id)).thenReturn(Optional.of(product));
+            when(productRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(product));
             when(productMapper.toProductResponse(product)).thenReturn(mock(ProductResponse.class));
 
             // When
@@ -88,7 +89,7 @@ class ProductServiceCacheTest {
             productService.getProductById(id);
 
             // Then
-            verify(productRepository, times(1)).findById(id);
+            verify(productRepository, times(1)).findByIdAndActiveTrue(id);
         }
 
         @Test
@@ -102,8 +103,8 @@ class ProductServiceCacheTest {
             ProductResponse responseA = mock(ProductResponse.class);
             ProductResponse responseB = mock(ProductResponse.class);
 
-            when(productRepository.findById(idA)).thenReturn(Optional.of(productA));
-            when(productRepository.findById(idB)).thenReturn(Optional.of(productB));
+            when(productRepository.findByIdAndActiveTrue(idA)).thenReturn(Optional.of(productA));
+            when(productRepository.findByIdAndActiveTrue(idB)).thenReturn(Optional.of(productB));
             when(productMapper.toProductResponse(productA)).thenReturn(responseA);
             when(productMapper.toProductResponse(productB)).thenReturn(responseB);
 
@@ -115,15 +116,15 @@ class ProductServiceCacheTest {
             assertThat(getCachedValue(idA)).isEqualTo(responseA);
             assertThat(getCachedValue(idB)).isEqualTo(responseB);
 
-            verify(productRepository, times(1)).findById(idA);
-            verify(productRepository, times(1)).findById(idB);
+            verify(productRepository, times(1)).findByIdAndActiveTrue(idA);
+            verify(productRepository, times(1)).findByIdAndActiveTrue(idB);
         }
 
         @Test
         void getProductById_ShouldNotCacheResult_WhenProductNotFound() {
             // Given
             UUID id = UUID.randomUUID();
-            when(productRepository.findById(id)).thenReturn(Optional.empty());
+            when(productRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.empty());
 
             // When & Then
             assertThatThrownBy(() -> productService.getProductById(id))
@@ -131,7 +132,7 @@ class ProductServiceCacheTest {
             assertThatThrownBy(() -> productService.getProductById(id))
                     .isInstanceOf(ProductNotFoundException.class);
 
-            verify(productRepository, times(2)).findById(id);
+            verify(productRepository, times(2)).findByIdAndActiveTrue(id);
         }
     }
 
@@ -144,6 +145,7 @@ class ProductServiceCacheTest {
             Product product = buildProduct(id);
 
             when(productRepository.findById(id)).thenReturn(Optional.of(product));
+            when(productRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(product));
             when(productMapper.toProductResponse(product)).thenReturn(mock(ProductResponse.class));
 
             productService.getProductById(id);
@@ -164,8 +166,9 @@ class ProductServiceCacheTest {
             Product productA = buildProduct(idA);
             Product productB = buildProduct(idB);
 
+            when(productRepository.findByIdAndActiveTrue(idA)).thenReturn(Optional.of(productA));
             when(productRepository.findById(idA)).thenReturn(Optional.of(productA));
-            when(productRepository.findById(idB)).thenReturn(Optional.of(productB));
+            when(productRepository.findByIdAndActiveTrue(idB)).thenReturn(Optional.of(productB));
             when(productMapper.toProductResponse(productA)).thenReturn(mock(ProductResponse.class));
             when(productMapper.toProductResponse(productB)).thenReturn(mock(ProductResponse.class));
 
@@ -211,6 +214,7 @@ class ProductServiceCacheTest {
             ProductResponse newResponse = mock(ProductResponse.class);
 
             when(productRepository.findById(id)).thenReturn(Optional.of(product));
+            when(productRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(product));
             when(productMapper.toProductResponse(product)).thenReturn(oldResponse, newResponse);
 
             productService.getProductById(id);
