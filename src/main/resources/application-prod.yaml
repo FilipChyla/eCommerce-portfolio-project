@@ -2,6 +2,7 @@ spring:
   docker:
     compose:
       enabled: false
+
 springdoc:
   api-docs:
     enabled: false
