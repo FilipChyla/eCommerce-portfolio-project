@@ -8,7 +8,7 @@ import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;
 import io.github.filipchyla.shopapi.product.exception.InvalidFilteringArgumentException;
 import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityException;
 import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +67,7 @@ public class ProductService {
         product.setActive(false);
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(value = "products", key = "#id")
     public ProductResponse getProductById(UUID id) {
         Product product = findActiveProductById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));

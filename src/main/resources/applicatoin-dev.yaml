@@ -1,0 +1,14 @@
+spring:
+  docker:
+    compose:
+      enabled: true
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+app:
+  cart-token:
+    secure: false
