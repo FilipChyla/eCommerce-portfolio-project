@@ -20,9 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfFilter;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.*;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -39,7 +37,12 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         RequestMatcher csrfProtectedEndpoints = new OrRequestMatcher(
                 PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/v1/auth/refresh"),
-                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/v1/auth/logout")
+                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/v1/auth/logout"),
+                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/v1/cart/items"),
+                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.PATCH, "/api/v1/cart/items/*"),
+                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.DELETE, "/api/v1/cart/items/*"),
+                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.DELETE, "/api/v1/cart"),
+                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/v1/cart/merge")
         );
 
         http
@@ -56,6 +59,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/categories").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/products/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/v1/cart/merge").authenticated()
+                        .requestMatchers( "/api/v1/cart/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

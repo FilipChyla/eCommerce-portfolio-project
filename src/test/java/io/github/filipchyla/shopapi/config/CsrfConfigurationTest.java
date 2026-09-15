@@ -4,7 +4,10 @@ import io.github.filipchyla.shopapi.auth.AuthenticationFacade;
 import io.github.filipchyla.shopapi.auth.AuthenticationController;
 import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
 import io.github.filipchyla.shopapi.auth.service.JwtService;
-import io.github.filipchyla.shopapi.product.category.controller.CategoryController;
+import io.github.filipchyla.shopapi.cart.CartController;
+import io.github.filipchyla.shopapi.cart.CartFacade;
+import io.github.filipchyla.shopapi.cart.CartTokenCookieFactory;
+import io.github.filipchyla.shopapi.cart.service.CartMergeService;
 import io.github.filipchyla.shopapi.product.category.CategoryMapper;
 import io.github.filipchyla.shopapi.product.category.CategoryService;
 import io.github.filipchyla.shopapi.user.UserController;
@@ -31,7 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = {UserController.class, AuthenticationController.class, CategoryController.class})
+@WebMvcTest(controllers = {UserController.class, AuthenticationController.class, CartController.class})
 @Import(SecurityConfiguration.class)
 @AutoConfigureMockMvc
 public class CsrfConfigurationTest {
@@ -52,6 +55,12 @@ public class CsrfConfigurationTest {
     private CategoryMapper categoryMapper;
     @MockitoBean
     private AuthenticationFacade authenticationFacade;
+    @MockitoBean
+    private CartFacade cartFacade;
+    @MockitoBean
+    private CartMergeService cartMergeService;
+    @MockitoBean
+    private CartTokenCookieFactory cartTokenCookieFactory;
 
     @ParameterizedTest
     @MethodSource("csrfProtectedEndpoints")
@@ -80,7 +89,12 @@ public class CsrfConfigurationTest {
     static Stream<Arguments> csrfProtectedEndpoints() {
         return Stream.of(
                 Arguments.of(HttpMethod.POST, "/api/v1/auth/refresh"),
-                Arguments.of(HttpMethod.POST, "/api/v1/auth/logout")
+                Arguments.of(HttpMethod.POST, "/api/v1/auth/logout"),
+                Arguments.of(HttpMethod.POST, "/api/v1/cart/items"),
+                Arguments.of(HttpMethod.PATCH, "/api/v1/cart/items/*"),
+                Arguments.of(HttpMethod.DELETE, "/api/v1/cart/items/*"),
+                Arguments.of(HttpMethod.DELETE, "/api/v1/cart"),
+                Arguments.of(HttpMethod.POST, "/api/v1/cart/merge")
         );
     }
 }

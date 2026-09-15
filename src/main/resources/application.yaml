@@ -31,6 +31,10 @@ app:
     expiration-ms: 1209600000
     max-sessions-per-user: 10
     cookie-name: refreshToken
+  cart-token:
+    expiration-ms: 604800000
+    cookie-name: cart_token
+    secure: true
 
 api:
   title: ShopAPI
