@@ -45,7 +45,6 @@ jobs:
 
       - name: Build and test with Maven
         run: ./mvnw -B clean verify
-        continue-on-error: true
 
       - name: Test Report
         uses: actions/upload-artifact@v7
