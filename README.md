@@ -1,4 +1,13 @@
 # eCommerce Portfolio Project
+![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?logo=springboot&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+![Maven](https://img.shields.io/badge/Maven-C71A36?logo=apachemaven&logoColor=white)
+![Build Status](https://github.com/FilipChyla/eCommerce-portfolio-project/actions/workflows/ci-cd.yml/badge.svg)
+![Last Commit](https://img.shields.io/github/last-commit/FilipChyla/eCommerce-portfolio-project)
+![License](https://img.shields.io/github/license/FilipChyla/eCommerce-portfolio-project)
 
 A production-inspired e-commerce REST API built with **Java 21 and Spring Boot**.
 
@@ -48,12 +57,20 @@ engineering decisions to improve scalability, security, and maintainability.
 | Validation                      | Jakarta Bean Validation                   |
 | Database Migrations             | Flyway                                    |
 | Object Mapping                  | MapStruct                                 |
-| Caching                         | Spring Cache / Caffeine / Redis           |
+| Caching                         | Spring Cache / Redis                      |
 | Testing                         | JUnit 5, Mockito, MockMvc, Testcontainers |
+| Code Coverage                   | JaCoCo (branch coverage)                  |
+| Test Reporting                  | Allure Report                             |
 | Containerization                | Docker / Docker Compose                   |
 | API Documentation               | OpenAPI / Swagger                         |
-| CI                              | GitHub Actions                            |
+| CI/CD                           | GitHub Actions                            |
 
+---
+
+## Reports
+
+- [Test Report (Allure)](https://filipchyla.github.io/eCommerce-portfolio-project/)
+- [Code Coverage (JaCoCo)](https://filipchyla.github.io/eCommerce-portfolio-project/coverage/)
 ---
 
 # Architecture
