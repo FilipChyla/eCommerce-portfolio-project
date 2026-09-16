@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.exception;
+
+import io.github.filipchyla.shopapi.exception.dto.ErrorResponse;
+import io.github.filipchyla.shopapi.exception.base.BadRequestException;
+import io.github.filipchyla.shopapi.exception.base.ConflictException;
+import io.github.filipchyla.shopapi.exception.base.NotFoundException;
+import io.github.filipchyla.shopapi.exception.base.UnauthorizedException;
+import jakarta.persistence.OptimisticLockException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestCookieException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestControllerAdvice
+<span class="fc" id="L24">@Slf4j</span>
+<span class="fc" id="L25">public class GlobalExceptionHandler {</span>
+    @ExceptionHandler({UnauthorizedException.class, BadCredentialsException.class})
+    public ResponseEntity&lt;ErrorResponse&gt; handleBadCredentials(Exception ex) {
+<span class="fc" id="L28">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L29">                HttpStatus.UNAUTHORIZED.value(),</span>
+<span class="fc" id="L30">                ex.getMessage(),</span>
+<span class="fc" id="L31">                Instant.now()</span>
+        );
+<span class="fc" id="L33">        return new ResponseEntity&lt;&gt;(error, HttpStatus.UNAUTHORIZED);</span>
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleTakenEmail(ConflictException ex) {
+<span class="fc" id="L38">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L39">                HttpStatus.CONFLICT.value(),</span>
+<span class="fc" id="L40">                ex.getMessage(),</span>
+<span class="fc" id="L41">                Instant.now()</span>
+        );
+<span class="fc" id="L43">        return new ResponseEntity&lt;&gt;(error, HttpStatus.CONFLICT);</span>
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleNotFound(Exception ex) {
+<span class="fc" id="L48">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L49">                HttpStatus.NOT_FOUND.value(),</span>
+<span class="fc" id="L50">                ex.getMessage(),</span>
+<span class="fc" id="L51">                Instant.now()</span>
+        );
+<span class="fc" id="L53">        return new ResponseEntity&lt;&gt;(error, HttpStatus.NOT_FOUND);</span>
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleValidationErrors(MethodArgumentNotValidException ex) {
+<span class="fc" id="L58">        List&lt;String&gt; errors = ex.getBindingResult()</span>
+<span class="fc" id="L59">                .getFieldErrors()</span>
+<span class="fc" id="L60">                .stream()</span>
+<span class="fc" id="L61">                .map(f -&gt; f.getField() + &quot;: &quot; + f.getDefaultMessage())</span>
+<span class="fc" id="L62">                .collect(Collectors.toList());</span>
+
+<span class="fc" id="L64">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L65">                HttpStatus.BAD_REQUEST.value(),</span>
+<span class="fc" id="L66">                String.join(&quot;, &quot;, errors),</span>
+<span class="fc" id="L67">                Instant.now()</span>
+        );
+
+<span class="fc" id="L70">        return new ResponseEntity&lt;&gt;(error, HttpStatus.BAD_REQUEST);</span>
+    }
+
+    @ExceptionHandler({MissingRequestCookieException.class, BadRequestException.class})
+    public ResponseEntity&lt;ErrorResponse&gt; handleMissingCookie(Exception ex) {
+<span class="fc" id="L75">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L76">                HttpStatus.BAD_REQUEST.value(),</span>
+<span class="fc" id="L77">                ex.getMessage(),</span>
+<span class="fc" id="L78">                Instant.now());</span>
+
+<span class="fc" id="L80">        return new ResponseEntity&lt;&gt;(error, HttpStatus.BAD_REQUEST);</span>
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleAuthorizationDenied(AuthorizationDeniedException ex) {
+<span class="nc" id="L85">        ErrorResponse error = new ErrorResponse(</span>
+<span class="nc" id="L86">                HttpStatus.FORBIDDEN.value(),</span>
+<span class="nc" id="L87">                ex.getMessage(),</span>
+<span class="nc" id="L88">                Instant.now());</span>
+
+<span class="nc" id="L90">        return new ResponseEntity&lt;&gt;(error, HttpStatus.FORBIDDEN);</span>
+    }
+
+    @ExceptionHandler(OptimisticLockException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleAuthorizationDenied(OptimisticLockException ex) {
+<span class="nc" id="L95">        ErrorResponse error = new ErrorResponse(</span>
+<span class="nc" id="L96">                HttpStatus.CONFLICT.value(),</span>
+<span class="nc" id="L97">                ex.getMessage(),</span>
+<span class="nc" id="L98">                Instant.now());</span>
+
+<span class="nc" id="L100">        return new ResponseEntity&lt;&gt;(error, HttpStatus.CONFLICT);</span>
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleGeneralException(Exception ex) {
+<span class="fc" id="L105">        log.error(&quot;An unexpected error occurred&quot;, ex);</span>
+<span class="fc" id="L106">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L107">                HttpStatus.INTERNAL_SERVER_ERROR.value(),</span>
+                &quot;An unexpected error occurred&quot;,
+<span class="fc" id="L109">                Instant.now()</span>
+        );
+<span class="fc" id="L111">        return new ResponseEntity&lt;&gt;(error, HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

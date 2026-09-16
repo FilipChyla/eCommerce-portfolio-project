@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RedisConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.config</a> &gt; <span class="el_source">RedisConfig.java</span></div><h1>RedisConfig.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.config;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.github.filipchyla.shopapi.product.category.dto.CategoryTreeResponse;
+import io.github.filipchyla.shopapi.product.dto.ProductResponse;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Configuration
+@EnableCaching
+<span class="fc" id="L30">public class RedisConfig {</span>
+
+    @Bean
+    public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
+<span class="fc" id="L34">        ObjectMapper redisObjectMapper = new ObjectMapper()</span>
+<span class="fc" id="L35">                .registerModule(new JavaTimeModule())</span>
+<span class="fc" id="L36">                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);</span>
+
+        RedisCacheConfiguration defaultConfig =
+<span class="fc" id="L39">                RedisCacheConfiguration.defaultCacheConfig()</span>
+<span class="fc" id="L40">                        .entryTtl(Duration.ofMinutes(10))</span>
+<span class="fc" id="L41">                        .disableCachingNullValues();</span>
+
+<span class="fc" id="L43">        Map&lt;String, RedisCacheConfiguration&gt; perCacheConfigs = new HashMap&lt;&gt;();</span>
+
+<span class="fc" id="L45">        perCacheConfigs.put(</span>
+                &quot;products&quot;,
+<span class="fc" id="L47">                defaultConfig.entryTtl(Duration.ofMinutes(15))</span>
+<span class="fc" id="L48">                        .serializeValuesWith(</span>
+<span class="fc" id="L49">                                RedisSerializationContext.SerializationPair.fromSerializer(</span>
+                                        new Jackson2JsonRedisSerializer&lt;&gt;(redisObjectMapper, ProductResponse.class)
+                                )
+                        )
+        );
+
+<span class="fc" id="L55">        perCacheConfigs.put(</span>
+                &quot;categories&quot;,
+<span class="fc" id="L57">                defaultConfig.entryTtl(Duration.ofHours(1))</span>
+<span class="fc" id="L58">                        .serializeValuesWith(</span>
+<span class="fc" id="L59">                                RedisSerializationContext.SerializationPair.fromSerializer(</span>
+                                        new Jackson2JsonRedisSerializer&lt;&gt;(
+                                                redisObjectMapper,
+<span class="fc" id="L62">                                                redisObjectMapper.getTypeFactory()</span>
+<span class="fc" id="L63">                                                        .constructCollectionType(List.class, CategoryTreeResponse.class)</span>
+                                        )
+                                )
+                        )
+        );
+
+<span class="fc" id="L69">        return RedisCacheManager.builder(connectionFactory)</span>
+<span class="fc" id="L70">                .cacheDefaults(defaultConfig)</span>
+<span class="fc" id="L71">                .withInitialCacheConfigurations(perCacheConfigs)</span>
+<span class="fc" id="L72">                .build();</span>
+    }
+
+    @Bean
+    public JedisPool jedisPool(
+            @Value(&quot;${spring.data.redis.host}&quot;) String host,
+            @Value(&quot;${spring.data.redis.port}&quot;) int port
+    ) {
+<span class="fc" id="L80">        GenericObjectPoolConfig&lt;Jedis&gt; poolConfig = new GenericObjectPoolConfig&lt;&gt;();</span>
+<span class="fc" id="L81">        poolConfig.setJmxEnabled(false);</span>
+<span class="fc" id="L82">        return new JedisPool(poolConfig, host, port);</span>
+    }
+
+    @Bean
+    public RedisScript&lt;String&gt; rotateRefreshTokenScript() {
+<span class="fc" id="L87">        return RedisScript.of(new ClassPathResource(&quot;scripts/rotate_refresh_token.lua&quot;), String.class);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

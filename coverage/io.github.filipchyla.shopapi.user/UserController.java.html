@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.user</a> &gt; <span class="el_source">UserController.java</span></div><h1>UserController.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.user;
+
+import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
+import io.github.filipchyla.shopapi.security.UserPrincipal;
+import io.github.filipchyla.shopapi.user.dto.ChangePasswordRequest;
+import io.github.filipchyla.shopapi.web.dto.MessageResponse;
+import io.github.filipchyla.shopapi.user.dto.PatchUserRequest;
+import io.github.filipchyla.shopapi.user.dto.UserResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+@Tag(name = &quot;User&quot;, description = &quot;Operations related to user account&quot;)
+@SecurityRequirement(name = &quot;bearerAuth&quot;)
+@RestController
+@RequestMapping(&quot;/api/v1/user/me&quot;)
+@RequiredArgsConstructor
+public class UserController {
+
+    private final UserService userService;
+    private final AuthenticationService authenticationService;
+
+    @Operation(
+            summary = &quot;Get authenticated user's profile information&quot;
+    )
+    @GetMapping
+    public ResponseEntity&lt;UserResponse&gt; getMe(@AuthenticationPrincipal UserPrincipal principal) {
+<span class="fc" id="L33">        return ResponseEntity.ok(userService.getUser(principal.user().getId()));</span>
+    }
+
+    @Operation(
+            summary = &quot;Update authenticated user's profile information&quot;,
+            description = &quot;Updates only the fields that are provided in the request body&quot;
+    )
+    @PatchMapping
+    public ResponseEntity&lt;UserResponse&gt; updateMe(@AuthenticationPrincipal UserPrincipal principal, @RequestBody @Valid PatchUserRequest request) {
+<span class="fc" id="L42">        return ResponseEntity.ok(userService.patchUser(request, principal.user().getId()));</span>
+    }
+
+    @Operation(
+            summary = &quot;Change authenticated user's password&quot;
+    )
+    @PatchMapping(&quot;/password&quot;)
+    public ResponseEntity&lt;MessageResponse&gt; updatePassword(@AuthenticationPrincipal UserPrincipal principal, @RequestBody @Valid ChangePasswordRequest request) {
+<span class="fc" id="L50">        authenticationService.changePassword(principal.user().getId(), request);</span>
+<span class="fc" id="L51">        return ResponseEntity.ok(new MessageResponse(&quot;Password changed successfully&quot;));</span>
+    }
+
+    @Operation(
+            summary = &quot;Delete authenticated user's account. This is a soft delete&quot;
+    )
+    @DeleteMapping
+    public ResponseEntity&lt;MessageResponse&gt; deleteMe(@AuthenticationPrincipal UserPrincipal principal) {
+<span class="fc" id="L59">        userService.deactivateUser(principal.user().getId());</span>
+<span class="fc" id="L60">        return ResponseEntity.ok(new MessageResponse(&quot;User deactivated successfully&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

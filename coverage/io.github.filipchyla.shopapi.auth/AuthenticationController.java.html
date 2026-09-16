@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthenticationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.auth</a> &gt; <span class="el_source">AuthenticationController.java</span></div><h1>AuthenticationController.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.auth;
+
+import io.github.filipchyla.shopapi.auth.dto.AuthenticationRequest;
+import io.github.filipchyla.shopapi.auth.dto.AccessTokenData;
+import io.github.filipchyla.shopapi.auth.dto.AuthenticationTokensData;
+import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
+import io.github.filipchyla.shopapi.security.UserPrincipal;
+import io.github.filipchyla.shopapi.web.dto.MessageResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+
+
+@Tag(name = &quot;Authentication&quot;, description = &quot;Operations related to authentication and refresh tokens lifecycle&quot;)
+@RestController
+@RequestMapping(&quot;/api/v1/auth&quot;)
+@RequiredArgsConstructor
+public class AuthenticationController {
+    private final AuthenticationFacade authenticationFacade;
+
+    @Operation(
+            summary = &quot;Register new account&quot;,
+            description = &quot;Create new account and return tokens&quot;
+    )
+    @PostMapping(&quot;/register&quot;)
+    public ResponseEntity&lt;AccessTokenData&gt; register(@Valid @RequestBody RegisterRequest request) {
+<span class="fc" id="L36">        AuthenticationTokensData data = authenticationFacade.registerUserAndReturnTokens(request);</span>
+
+<span class="fc" id="L38">        URI location = URI.create(&quot;/api/v1/user/me&quot;);</span>
+
+<span class="fc" id="L40">        return ResponseEntity.created(location)</span>
+<span class="fc" id="L41">                .header(HttpHeaders.SET_COOKIE, data.refreshTokenCookie().toString())</span>
+<span class="fc" id="L42">                .body(data.accessToken());</span>
+    }
+
+    @Operation(
+            summary = &quot;Authenticate user&quot;
+    )
+    @PostMapping(&quot;/authenticate&quot;)
+    public ResponseEntity&lt;AccessTokenData&gt; authenticate(@Valid @RequestBody AuthenticationRequest request) {
+<span class="fc" id="L50">        AuthenticationTokensData data = authenticationFacade.authenticateUserAndReturnTokens(request);</span>
+
+<span class="fc" id="L52">        return ResponseEntity.ok()</span>
+<span class="fc" id="L53">                .header(HttpHeaders.SET_COOKIE, data.refreshTokenCookie().toString())</span>
+<span class="fc" id="L54">                .body(data.accessToken());</span>
+    }
+
+    @Operation(
+            summary = &quot;Refresh jwt token&quot;
+    )
+    @PostMapping(&quot;/refresh&quot;)
+    public ResponseEntity&lt;AccessTokenData&gt; refresh(
+            @CookieValue(name = &quot;${app.refresh-token.cookie-name}&quot;) String rawRefreshToken) {
+<span class="fc" id="L63">        AuthenticationTokensData data = authenticationFacade.refreshToken(rawRefreshToken);</span>
+
+<span class="fc" id="L65">        return ResponseEntity.ok()</span>
+<span class="fc" id="L66">                .header(HttpHeaders.SET_COOKIE, data.refreshTokenCookie().toString())</span>
+<span class="fc" id="L67">                .body(data.accessToken());</span>
+    }
+
+    @Operation(
+            summary = &quot;Invalidate given refresh token&quot;
+    )
+    @PostMapping(&quot;/logout&quot;)
+    public ResponseEntity&lt;MessageResponse&gt; logout(
+            @CookieValue(name = &quot;${app.refresh-token.cookie-name}&quot;, required = false) String rawRefreshToken) {
+<span class="fc" id="L76">        ResponseCookie cookie = authenticationFacade.revokeSingleForUser(rawRefreshToken);</span>
+
+<span class="fc" id="L78">        return ResponseEntity.ok()</span>
+<span class="fc" id="L79">                .header(HttpHeaders.SET_COOKIE, cookie.toString())</span>
+<span class="fc" id="L80">                .body(new MessageResponse(&quot;User logged out successfully&quot;));</span>
+    }
+
+    @Operation(
+            summary = &quot;Invalidate all refresh tokens for authenticated user&quot;
+    )
+    @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    @PostMapping(&quot;/logout-all&quot;)
+    public ResponseEntity&lt;MessageResponse&gt; logoutAll(@AuthenticationPrincipal UserPrincipal principal) {
+<span class="fc" id="L89">        ResponseCookie cookie = authenticationFacade.revokeAllTokensForUser(principal);</span>
+
+<span class="fc" id="L91">        return ResponseEntity.ok()</span>
+<span class="fc" id="L92">                .header(HttpHeaders.SET_COOKIE, cookie.toString())</span>
+<span class="fc" id="L93">                .body(new MessageResponse(&quot;User logged out from all devices successfully&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

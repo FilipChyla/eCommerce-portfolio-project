@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GuestCartMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.cart.mapper</a> &gt; <span class="el_source">GuestCartMapper.java</span></div><h1>GuestCartMapper.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.cart.mapper;
+
+import io.github.filipchyla.shopapi.cart.PriceCalculator;
+import io.github.filipchyla.shopapi.cart.domain.GuestCart;
+import io.github.filipchyla.shopapi.cart.domain.GuestCartItem;
+import io.github.filipchyla.shopapi.cart.dto.CartItemResponse;
+import io.github.filipchyla.shopapi.cart.dto.CartResponse;
+import io.github.filipchyla.shopapi.product.Product;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+
+@Mapper(componentModel = &quot;spring&quot;, imports = PriceCalculator.class)
+public interface GuestCartMapper {
+    @Mapping(target = &quot;productId&quot;, source = &quot;item.productId&quot;)
+    @Mapping(target = &quot;productName&quot;, source = &quot;product.name&quot;)
+    @Mapping(target = &quot;quantity&quot;, source = &quot;item.quantity&quot;)
+    @Mapping(target = &quot;unitPriceSnapshot&quot;, source = &quot;item.unitPriceSnapshot&quot;)
+    @Mapping(target = &quot;currentPrice&quot;, source = &quot;product.price&quot;)
+    @Mapping(target = &quot;priceChanged&quot;, expression = &quot;java(PriceCalculator.isPriceChanged(item.getUnitPriceSnapshot(), product.getPrice()))&quot;)
+    @Mapping(target = &quot;lineTotal&quot;, expression = &quot;java(PriceCalculator.lineTotal(product.getPrice(), item.getQuantity()))&quot;)
+    CartItemResponse toItemResponse(GuestCartItem item, Product product);
+
+    default CartResponse toCartResponse(GuestCart cart, Map&lt;UUID, Product&gt; products) {
+<span class="fc" id="L30">        List&lt;CartItemResponse&gt; items = cart.getItems().stream().map(item -&gt; {</span>
+<span class="fc" id="L31">            Product product = products.get(item.getProductId());</span>
+<span class="pc bpc" id="L32" title="1 of 2 branches missed.">            if (product == null) {</span>
+<span class="nc" id="L33">                return null;</span>
+            }
+<span class="fc" id="L35">            return toItemResponse(item, product);</span>
+<span class="fc" id="L36">        }).filter(Objects::nonNull).toList();</span>
+
+<span class="fc" id="L38">        BigDecimal totalPrice = PriceCalculator.totalPrice(items);</span>
+<span class="fc" id="L39">        return new CartResponse(null, items, totalPrice);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

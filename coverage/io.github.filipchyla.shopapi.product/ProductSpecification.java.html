@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductSpecification.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.product</a> &gt; <span class="el_source">ProductSpecification.java</span></div><h1>ProductSpecification.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.product;
+
+import org.springframework.data.jpa.domain.Specification;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+<span class="nc" id="L8">public class ProductSpecification {</span>
+    public static Specification&lt;Product&gt; hasCategory(UUID categoryId) {
+<span class="fc bfc" id="L10" title="All 2 branches covered.">        return (root, query, cb) -&gt; categoryId == null ? null :</span>
+<span class="fc" id="L11">                cb.equal(root.get(&quot;category&quot;).get(&quot;id&quot;), categoryId);</span>
+    }
+
+    public static Specification&lt;Product&gt; priceGreaterOrEqual(BigDecimal minPrice) {
+<span class="fc bfc" id="L15" title="All 2 branches covered.">        return (root, query, cb) -&gt; minPrice == null ? null :</span>
+<span class="fc" id="L16">                cb.greaterThanOrEqualTo(root.get(&quot;price&quot;), minPrice);</span>
+    }
+
+    public static Specification&lt;Product&gt; priceLessOrEqual(BigDecimal maxPrice) {
+<span class="fc bfc" id="L20" title="All 2 branches covered.">        return (root, query, cb) -&gt; maxPrice == null ? null :</span>
+<span class="fc" id="L21">                cb.lessThanOrEqualTo(root.get(&quot;price&quot;), maxPrice);</span>
+    }
+
+    public static Specification&lt;Product&gt; isActive() {
+<span class="fc" id="L25">        return (root, query, cb) -&gt; cb.isTrue(root.get(&quot;active&quot;));</span>
+    }
+
+    public static Specification&lt;Product&gt; filterBy(UUID categoryId, BigDecimal minPrice, BigDecimal maxPrice) {
+<span class="fc" id="L29">        return Specification.allOf(</span>
+<span class="fc" id="L30">                hasCategory(categoryId),</span>
+<span class="fc" id="L31">                priceGreaterOrEqual(minPrice),</span>
+<span class="fc" id="L32">                priceLessOrEqual(maxPrice),</span>
+<span class="fc" id="L33">                isActive()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

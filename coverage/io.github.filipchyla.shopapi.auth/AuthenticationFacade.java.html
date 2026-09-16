@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthenticationFacade.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.auth</a> &gt; <span class="el_source">AuthenticationFacade.java</span></div><h1>AuthenticationFacade.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.auth;
+
+import io.github.filipchyla.shopapi.auth.dto.AccessTokenData;
+import io.github.filipchyla.shopapi.auth.dto.AuthenticationRequest;
+import io.github.filipchyla.shopapi.auth.dto.AuthenticationTokensData;
+import io.github.filipchyla.shopapi.auth.dto.RegisterRequest;
+import io.github.filipchyla.shopapi.auth.exception.UserDisabledException;
+import io.github.filipchyla.shopapi.auth.service.AuthenticationService;
+import io.github.filipchyla.shopapi.auth.service.JwtService;
+import io.github.filipchyla.shopapi.auth.service.RefreshTokenService;
+import io.github.filipchyla.shopapi.security.UserPrincipal;
+import io.github.filipchyla.shopapi.user.User;
+import io.github.filipchyla.shopapi.user.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
+import org.springframework.stereotype.Component;
+
+import java.util.UUID;
+
+@RequiredArgsConstructor
+@Component
+public class AuthenticationFacade {
+    private final AuthenticationService authenticationService;
+    private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
+    private final RefreshTokenCookieFactory cookieFactory;
+    private final UserService userService;
+
+    public AuthenticationTokensData registerUserAndReturnTokens(RegisterRequest request){
+<span class="fc" id="L30">        UserPrincipal userPrincipal = authenticationService.register(request);</span>
+
+<span class="fc" id="L32">        return generateTokensForUser(userPrincipal);</span>
+    }
+
+    public AuthenticationTokensData authenticateUserAndReturnTokens(AuthenticationRequest request) {
+<span class="fc" id="L36">        UserPrincipal userPrincipal = authenticationService.authenticate(request);</span>
+
+<span class="fc" id="L38">        return generateTokensForUser(userPrincipal);</span>
+    }
+
+    public AuthenticationTokensData refreshToken(String rawRefreshToken) {
+<span class="fc" id="L42">        UserPrincipal userPrincipal = getPrincipalFromToken(rawRefreshToken);</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        if (!userPrincipal.isEnabled()) throw new UserDisabledException(&quot;Account is deactivated&quot;);</span>
+
+<span class="fc" id="L45">        String newRefreshToken = refreshTokenService.rotateToken(rawRefreshToken);</span>
+<span class="fc" id="L46">        String accessToken = jwtService.generateToken(userPrincipal);</span>
+
+<span class="fc" id="L48">        ResponseCookie cookie = cookieFactory.create(newRefreshToken);</span>
+<span class="fc" id="L49">        AccessTokenData accessTokenData = new AccessTokenData(accessToken);</span>
+
+<span class="fc" id="L51">        return new AuthenticationTokensData(accessTokenData, cookie);</span>
+    }
+
+    public ResponseCookie revokeSingleForUser(String rawRefreshToken) {
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        if (rawRefreshToken != null) {</span>
+<span class="fc" id="L56">            refreshTokenService.revokeToken(rawRefreshToken);</span>
+        }
+
+<span class="fc" id="L59">        return cookieFactory.createExpired();</span>
+    }
+
+    public ResponseCookie revokeAllTokensForUser(UserPrincipal principal) {
+<span class="fc" id="L63">        refreshTokenService.revokeAllForUser(principal.user().getId().toString());</span>
+
+<span class="fc" id="L65">        return cookieFactory.createExpired();</span>
+    }
+
+    private UserPrincipal getPrincipalFromToken(String newRefreshToken) {
+<span class="fc" id="L69">        String userId = refreshTokenService.getUserIdFromToken(newRefreshToken);</span>
+<span class="fc" id="L70">        User user = userService.getUserEntity(UUID.fromString(userId));</span>
+<span class="fc" id="L71">        return new UserPrincipal(user);</span>
+    }
+
+    private AuthenticationTokensData generateTokensForUser(UserPrincipal principal){
+<span class="fc" id="L75">        UUID userId = principal.user().getId();</span>
+
+<span class="fc" id="L77">        String accessToken = jwtService.generateToken(principal);</span>
+<span class="fc" id="L78">        String refreshToken = refreshTokenService.createNewToken(userId.toString());</span>
+
+<span class="fc" id="L80">        AccessTokenData accessTokenData = new AccessTokenData(accessToken);</span>
+<span class="fc" id="L81">        ResponseCookie cookie = cookieFactory.create(refreshToken);</span>
+
+<span class="fc" id="L83">        return new AuthenticationTokensData(accessTokenData, cookie);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

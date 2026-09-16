@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductAdminController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.product.controller</a> &gt; <span class="el_source">ProductAdminController.java</span></div><h1>ProductAdminController.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.product.controller;
+
+import io.github.filipchyla.shopapi.product.ProductService;
+import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
+import io.github.filipchyla.shopapi.product.dto.ProductResponse;
+import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;
+import io.github.filipchyla.shopapi.product.dto.UpdateStockRequest;
+import io.github.filipchyla.shopapi.web.dto.MessageResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.util.UUID;
+
+@Tag(name = &quot;Products - Admin&quot;, description = &quot;Operations altering product catalog&quot;)
+@SecurityRequirement(name = &quot;bearerAuth&quot;)
+@RestController
+@RequestMapping(&quot;/api/v1/admin/products&quot;)
+@RequiredArgsConstructor
+public class ProductAdminController {
+    private final ProductService productService;
+
+    @Operation(
+            summary = &quot;Add new product&quot;
+    )
+    @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @PostMapping
+    public ResponseEntity&lt;ProductResponse&gt; addProduct(@RequestBody @Valid CreateProductRequest newProduct) {
+<span class="fc" id="L36">        ProductResponse createdProduct = productService.addProduct(newProduct);</span>
+<span class="fc" id="L37">        URI uri = URI.create(&quot;/api/v1/products/&quot; + createdProduct.id());</span>
+
+<span class="fc" id="L39">        return ResponseEntity.created(uri)</span>
+<span class="fc" id="L40">                .body(createdProduct);</span>
+    }
+
+    @Operation(
+            summary = &quot;Change stock amount&quot;,
+            description = &quot;Adjusts stock amount of a product by given amount. Can be negative to decrease stock amount. Updates cache&quot;
+    )
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @PatchMapping(&quot;/{id}/stock&quot;)
+    public ResponseEntity&lt;ProductResponse&gt; updateStock(@PathVariable UUID id, @RequestBody @Valid UpdateStockRequest request) {
+<span class="fc" id="L50">        return ResponseEntity.ok(productService.adjustStock(id, request.difference()));</span>
+    }
+
+    @Operation(
+            summary = &quot;Update product information&quot;,
+            description = &quot;Update info for fields in request, not mentioned fields will be ignored. Updates cache&quot;
+    )
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @PatchMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;ProductResponse&gt; updateProduct(@PathVariable UUID id, @RequestBody @Valid UpdateProductRequest request) {
+<span class="fc" id="L60">        return ResponseEntity.ok(productService.updateProduct(id, request));</span>
+    }
+
+    @Operation(
+            summary = &quot;Delete product. This is a soft delete&quot;
+    )
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;MessageResponse&gt; deleteProduct(@PathVariable UUID id) {
+<span class="fc" id="L69">        productService.deleteProduct(id);</span>
+<span class="fc" id="L70">        return ResponseEntity.ok(new MessageResponse(&quot;Product deleted successfully&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

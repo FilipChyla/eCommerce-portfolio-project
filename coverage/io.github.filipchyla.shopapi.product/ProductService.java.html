@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.product</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.product;
+
+import io.github.filipchyla.shopapi.product.category.Category;
+import io.github.filipchyla.shopapi.product.category.CategoryService;
+import io.github.filipchyla.shopapi.product.dto.CreateProductRequest;
+import io.github.filipchyla.shopapi.product.dto.ProductResponse;
+import io.github.filipchyla.shopapi.product.dto.UpdateProductRequest;
+import io.github.filipchyla.shopapi.product.exception.InvalidFilteringArgumentException;
+import io.github.filipchyla.shopapi.product.exception.InvalidStockQuantityException;
+import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L32">@Slf4j</span>
+public class ProductService {
+    private final ProductRepository productRepository;
+    private final CategoryService categoryService;
+    private final ProductMapper productMapper;
+    private final CacheManager cacheManager;
+
+    public Page&lt;ProductResponse&gt; findProducts(UUID categoryId, BigDecimal minPrice,
+                                              BigDecimal maxPrice, Pageable pageable) {
+<span class="pc bpc" id="L41" title="1 of 6 branches missed.">        if (minPrice != null &amp;&amp; maxPrice != null &amp;&amp; minPrice.compareTo(maxPrice) &gt; 0) {</span>
+<span class="fc" id="L42">            throw new InvalidFilteringArgumentException(&quot;minPrice must be smaller than maxPrice&quot;);</span>
+        }
+
+<span class="fc" id="L45">        Specification&lt;Product&gt; spec = ProductSpecification.filterBy(categoryId, minPrice, maxPrice);</span>
+<span class="fc" id="L46">        return productRepository.findAll(spec, pageable).map(productMapper::toProductResponse);</span>
+    }
+
+    public ProductResponse addProduct(CreateProductRequest newProduct) {
+<span class="fc" id="L50">        Product product = new Product();</span>
+<span class="fc" id="L51">        product.setName(newProduct.name());</span>
+<span class="fc" id="L52">        product.setDescription(newProduct.description());</span>
+<span class="fc" id="L53">        product.setPrice(newProduct.price());</span>
+<span class="fc" id="L54">        product.setStockQuantity(newProduct.stockQuantity());</span>
+
+<span class="fc" id="L56">        Category category = categoryService.getCategoryById(newProduct.categoryId());</span>
+
+<span class="fc" id="L58">        product.setCategory(category);</span>
+
+<span class="fc" id="L60">        return productMapper.toProductResponse(productRepository.save(product));</span>
+    }
+
+    @Transactional
+    @CacheEvict(value = &quot;products&quot;, key = &quot;#id&quot;)
+    public void deleteProduct(UUID id) {
+<span class="fc" id="L66">        Product product = findProductByIdOrThrow(id);</span>
+<span class="fc" id="L67">        product.setActive(false);</span>
+<span class="fc" id="L68">    }</span>
+
+    @Transactional(readOnly = true)
+    @Cacheable(value = &quot;products&quot;, key = &quot;#id&quot;)
+    public ProductResponse getProductById(UUID id) {
+<span class="fc" id="L73">        Product product = findActiveProductById(id).orElseThrow(() -&gt; new ProductNotFoundException(&quot;Product not found with id: &quot; + id));</span>
+<span class="fc" id="L74">        return productMapper.toProductResponse(product);</span>
+    }
+
+    @CachePut(value = &quot;products&quot;, key = &quot;#id&quot;)
+    @Transactional
+    public ProductResponse adjustStock(UUID id, int delta) {
+<span class="fc" id="L80">        Product product = findProductByIdOrThrow(id);</span>
+<span class="fc" id="L81">        int currentStock = product.getStockQuantity();</span>
+
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (currentStock + delta &lt; 0) {</span>
+<span class="fc" id="L84">            throw new InvalidStockQuantityException(&quot;Stock difference cannot be negative&quot;);</span>
+        }
+<span class="fc" id="L86">        product.setStockQuantity(currentStock + delta);</span>
+
+<span class="fc" id="L88">        return productMapper.toProductResponse(product);</span>
+    }
+
+    @Transactional
+    public ProductResponse updateProduct(UUID id, @Valid UpdateProductRequest request) {
+<span class="fc" id="L93">        Product product = findProductByIdOrThrow(id);</span>
+
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        if (request.categoryId() != null){</span>
+<span class="fc" id="L96">            Category category = categoryService.getCategoryById(request.categoryId());</span>
+<span class="fc" id="L97">            product.setCategory(category);</span>
+        }
+
+<span class="fc" id="L100">        productMapper.updateFromPatchRequest(request, product);</span>
+<span class="fc" id="L101">        ProductResponse response = productMapper.toProductResponse(product);</span>
+
+<span class="fc" id="L103">        Cache cache = cacheManager.getCache(&quot;products&quot;);</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if (cache == null) {</span>
+<span class="nc" id="L105">            log.warn(&quot;Cache 'products' is not configured; skipping cache update for id={}&quot;, id);</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        } else if (product.isActive()) {</span>
+<span class="fc" id="L107">            cache.put(id, response);</span>
+        } else {
+<span class="nc" id="L109">            cache.evict(id);</span>
+        }
+
+<span class="fc" id="L112">        return response;</span>
+    }
+
+    private Product findProductByIdOrThrow(UUID id) {
+<span class="fc" id="L116">        return productRepository.findById(id).orElseThrow(() -&gt; new ProductNotFoundException(&quot;Product not found with id: &quot; + id));</span>
+    }
+
+    public Optional&lt;Product&gt; findProductById(UUID id) {
+<span class="nc" id="L120">        return productRepository.findById(id);</span>
+    }
+
+    public List&lt;Product&gt; findAllByIds(List&lt;UUID&gt; ids) {
+<span class="fc" id="L124">        return productRepository.findAllById(ids);</span>
+    }
+
+    public Optional&lt;Product&gt; findActiveProductById(UUID id) {
+<span class="fc" id="L128">        return productRepository.findByIdAndActiveTrue(id);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

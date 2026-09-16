@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.config</a> &gt; <span class="el_source">SecurityConfiguration.java</span></div><h1>SecurityConfiguration.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.config;
+
+import io.github.filipchyla.shopapi.security.filter.CsrfCookieFilter;
+import io.github.filipchyla.shopapi.security.filter.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.*;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+
+@Configuration
+@EnableMethodSecurity
+@EnableWebSecurity
+@RequiredArgsConstructor
+public class SecurityConfiguration {
+    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final UserDetailsService userDetailsService;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+<span class="fc" id="L38">        RequestMatcher csrfProtectedEndpoints = new OrRequestMatcher(</span>
+<span class="fc" id="L39">                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, &quot;/api/v1/auth/refresh&quot;),</span>
+<span class="fc" id="L40">                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, &quot;/api/v1/auth/logout&quot;),</span>
+<span class="fc" id="L41">                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, &quot;/api/v1/cart/items&quot;),</span>
+<span class="fc" id="L42">                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.PATCH, &quot;/api/v1/cart/items/*&quot;),</span>
+<span class="fc" id="L43">                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.DELETE, &quot;/api/v1/cart/items/*&quot;),</span>
+<span class="fc" id="L44">                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.DELETE, &quot;/api/v1/cart&quot;),</span>
+<span class="fc" id="L45">                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, &quot;/api/v1/cart/merge&quot;)</span>
+        );
+
+<span class="fc" id="L48">        http</span>
+<span class="fc" id="L49">                .csrf(csrf -&gt; csrf</span>
+<span class="fc" id="L50">                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())</span>
+<span class="fc" id="L51">                        .requireCsrfProtectionMatcher(csrfProtectedEndpoints)</span>
+<span class="fc" id="L52">                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())</span>
+                )
+<span class="fc" id="L54">                .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)</span>
+<span class="fc" id="L55">                .authorizeHttpRequests(auth -&gt; auth</span>
+<span class="fc" id="L56">                        .requestMatchers(&quot;/swagger-ui/**&quot;,&quot;/v3/api-docs/**&quot;, &quot;/actuator/health/**&quot;).permitAll()</span>
+<span class="fc" id="L57">                        .requestMatchers(&quot;/api/v1/admin/**&quot;).hasRole(&quot;ADMIN&quot;)</span>
+<span class="fc" id="L58">                        .requestMatchers(&quot;/api/v1/auth/logout-all&quot;).authenticated()</span>
+<span class="fc" id="L59">                        .requestMatchers(&quot;/api/v1/auth/**&quot;).permitAll()</span>
+<span class="fc" id="L60">                        .requestMatchers(HttpMethod.GET,&quot;/api/v1/categories&quot;).permitAll()</span>
+<span class="fc" id="L61">                        .requestMatchers(HttpMethod.GET,&quot;/api/v1/products/**&quot;).permitAll()</span>
+<span class="fc" id="L62">                        .requestMatchers(HttpMethod.POST,&quot;/api/v1/cart/merge&quot;).authenticated()</span>
+<span class="fc" id="L63">                        .requestMatchers( &quot;/api/v1/cart/**&quot;).permitAll()</span>
+<span class="fc" id="L64">                        .anyRequest().authenticated()</span>
+                )
+<span class="fc" id="L66">                .exceptionHandling(ex -&gt; ex</span>
+<span class="fc" id="L67">                        .authenticationEntryPoint((request, response, authException) -&gt;</span>
+<span class="fc" id="L68">                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, &quot;Unauthorized&quot;))</span>
+                )
+<span class="fc" id="L70">                .sessionManagement(session -&gt; session</span>
+<span class="fc" id="L71">                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)</span>
+                )
+<span class="fc" id="L73">                .authenticationProvider(authenticationProvider())</span>
+<span class="fc" id="L74">                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);</span>
+
+<span class="fc" id="L76">        return http.build();</span>
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+<span class="fc" id="L81">        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);</span>
+<span class="fc" id="L82">        authProvider.setPasswordEncoder(passwordEncoder());</span>
+<span class="fc" id="L83">        return authProvider;</span>
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+<span class="fc" id="L88">        return config.getAuthenticationManager();</span>
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+<span class="fc" id="L93">        return new BCryptPasswordEncoder();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GuestCartService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.cart.service</a> &gt; <span class="el_source">GuestCartService.java</span></div><h1>GuestCartService.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.cart.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.filipchyla.shopapi.cart.CartLimitPolicy;
+import io.github.filipchyla.shopapi.cart.domain.GuestCart;
+import io.github.filipchyla.shopapi.cart.domain.GuestCartItem;
+import io.github.filipchyla.shopapi.cart.dto.AddCartItemRequest;
+import io.github.filipchyla.shopapi.cart.dto.CartResponse;
+import io.github.filipchyla.shopapi.cart.dto.UpdateCartItemRequest;
+import io.github.filipchyla.shopapi.cart.exception.CartItemNotFoundException;
+import io.github.filipchyla.shopapi.cart.mapper.GuestCartMapper;
+import io.github.filipchyla.shopapi.product.Product;
+import io.github.filipchyla.shopapi.product.ProductService;
+import io.github.filipchyla.shopapi.product.exception.ProductNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class GuestCartService {
+<span class="fc" id="L28">    private static final Duration GUEST_CART_TTL = Duration.ofDays(7);</span>
+    private static final String KEY_PREFIX = &quot;guest-cart:&quot;;
+
+    private final RedisTemplate&lt;String, String&gt; redis;
+    private final ObjectMapper objectMapper;
+    private final ProductService productService;
+    private final CartLimitPolicy cartLimitPolicy;
+    private final GuestCartMapper guestCartMapper;
+
+    public CartResponse getCart(String cartToken) {
+<span class="fc" id="L38">        GuestCart cart = loadCart(cartToken);</span>
+<span class="fc" id="L39">        Map&lt;UUID, Product&gt; productsInfo = fetchProductInfoForCart(cart.getItems());</span>
+
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        if (cart.removeStaleItems(productsInfo.keySet())) {</span>
+<span class="fc" id="L42">            save(cartToken, cart);</span>
+        }
+
+<span class="fc" id="L45">        return guestCartMapper.toCartResponse(cart, productsInfo);</span>
+    }
+
+    public CartResponse addItem(String cartToken, AddCartItemRequest request) {
+<span class="fc" id="L49">        GuestCart cart = loadCart(cartToken);</span>
+<span class="fc" id="L50">        Product product = productService.findActiveProductById(request.productId())</span>
+<span class="fc" id="L51">                .orElseThrow(() -&gt; new ProductNotFoundException(&quot;Product not found with id: &quot; + request.productId()));</span>
+
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        boolean isNew = cart.findItemByProductId(product.getId()) == null;</span>
+<span class="fc" id="L54">        int requestedQuantity = cart.quantityIfAdded(request.productId(), request.quantity());</span>
+
+<span class="fc" id="L56">        Map&lt;UUID, Product&gt; productsInfo = fetchProductInfoForCart(cart.getItems());</span>
+<span class="fc" id="L57">        cart.removeStaleItems(productsInfo.keySet());</span>
+
+<span class="fc" id="L59">        cartLimitPolicy.validateAddition(</span>
+                product,
+                requestedQuantity,
+                isNew,
+<span class="fc" id="L63">                cart.distinctItemCount());</span>
+
+<span class="fc" id="L65">        cart.addOrIncreaseItem(product.getId(), request.quantity(), product.getPrice());</span>
+
+<span class="fc" id="L67">        save(cartToken, cart);</span>
+
+<span class="fc" id="L69">        productsInfo.put(product.getId(), product);</span>
+<span class="fc" id="L70">        return guestCartMapper.toCartResponse(cart, productsInfo);</span>
+    }
+
+    public CartResponse updateItemQuantity(String cartToken, UUID productId, UpdateCartItemRequest request) {
+<span class="fc" id="L74">        GuestCart cart = loadCart(cartToken);</span>
+<span class="fc" id="L75">        GuestCartItem item = cart.findItemByProductId(productId);</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if (item == null) {</span>
+<span class="fc" id="L77">            throw new CartItemNotFoundException(&quot;Product &quot; + productId + &quot; is not in the cart&quot;);</span>
+        }
+
+<span class="fc" id="L80">        Product product = productService.findProductById(productId)</span>
+<span class="fc" id="L81">                .orElseThrow(() -&gt; new ProductNotFoundException(&quot;Product not found with id: &quot; + productId));</span>
+
+<span class="fc" id="L83">        cartLimitPolicy.validateQuantityUpdate(product, request.quantity());</span>
+
+<span class="fc" id="L85">        item.setQuantity(request.quantity());</span>
+
+<span class="fc" id="L87">        save(cartToken, cart);</span>
+
+<span class="fc" id="L89">        Map&lt;UUID, Product&gt; productsInfo = fetchProductInfoForCart(cart.getItems());</span>
+<span class="fc" id="L90">        return guestCartMapper.toCartResponse(cart, productsInfo);</span>
+    }
+
+    public CartResponse removeItem(String cartToken, UUID productId) {
+<span class="fc" id="L94">        GuestCart cart = loadCart(cartToken);</span>
+<span class="fc" id="L95">        GuestCartItem item = cart.findItemByProductId(productId);</span>
+
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (item == null) {</span>
+<span class="fc" id="L98">            throw new CartItemNotFoundException(&quot;Product &quot; + productId + &quot; is not in the cart&quot;);</span>
+        }
+
+<span class="fc" id="L101">        cart.removeItem(productId);</span>
+<span class="fc" id="L102">        save(cartToken, cart);</span>
+
+<span class="fc" id="L104">        Map&lt;UUID, Product&gt; productsInfo = fetchProductInfoForCart(cart.getItems());</span>
+<span class="fc" id="L105">        return guestCartMapper.toCartResponse(cart, productsInfo);</span>
+    }
+
+    public void clearCart(String cartToken) {
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (cartToken != null) {</span>
+<span class="fc" id="L110">            redis.delete(key(cartToken));</span>
+        }
+<span class="fc" id="L112">    }</span>
+
+    private Map&lt;UUID, Product&gt; fetchProductInfoForCart(List&lt;GuestCartItem&gt; items) {
+<span class="fc" id="L115">        List&lt;UUID&gt; productIds = items.stream().map(GuestCartItem::getProductId).toList();</span>
+
+<span class="fc" id="L117">        return productService.findAllByIds(productIds).stream()</span>
+<span class="fc" id="L118">                .collect(Collectors.toMap(Product::getId, Function.identity()));</span>
+    }
+
+    private GuestCart loadCart(String cartToken) {
+<span class="fc bfc" id="L122" title="All 2 branches covered.">        if (cartToken == null) {</span>
+<span class="fc" id="L123">            return new GuestCart();</span>
+        }
+
+<span class="fc" id="L126">        String json = redis.opsForValue().get(key(cartToken));</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (json == null) {</span>
+<span class="fc" id="L128">            return new GuestCart();</span>
+        }
+
+        try {
+<span class="fc" id="L132">            return objectMapper.readValue(json, GuestCart.class);</span>
+
+<span class="fc" id="L134">        } catch (JsonProcessingException e) {</span>
+<span class="fc" id="L135">            throw new IllegalStateException(&quot;Corrupted guest cart data&quot;, e);</span>
+        }
+    }
+
+    private void save(String cartToken, GuestCart cart) {
+        try {
+<span class="fc" id="L141">            redis.opsForValue().set(key(cartToken), objectMapper.writeValueAsString(cart), GUEST_CART_TTL);</span>
+<span class="nc" id="L142">        } catch (JsonProcessingException e) {</span>
+<span class="nc" id="L143">            throw new IllegalStateException(&quot;Cannot serialize guest cart data&quot;, e);</span>
+<span class="fc" id="L144">        }</span>
+<span class="fc" id="L145">    }</span>
+
+    private String key(String cartToken) {
+<span class="fc" id="L148">        return KEY_PREFIX + cartToken;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

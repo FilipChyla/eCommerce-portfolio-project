@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CartController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.cart</a> &gt; <span class="el_source">CartController.java</span></div><h1>CartController.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.cart;
+
+import io.github.filipchyla.shopapi.cart.dto.*;
+import io.github.filipchyla.shopapi.cart.service.CartMergeService;
+import io.github.filipchyla.shopapi.security.UserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+@Tag(name = &quot;Cart&quot;, description = &quot;Operations on the current user's or guest's shopping cart&quot;)
+@RestController
+@RequestMapping(&quot;/api/v1/cart&quot;)
+@RequiredArgsConstructor
+public class CartController {
+    private final CartFacade cartFacade;
+    private final CartMergeService cartMergeService;
+    private final CartTokenCookieFactory cartTokenCookieFactory;
+
+    @Operation(summary = &quot;Get the current cart&quot;)
+    @GetMapping
+    public ResponseEntity&lt;CartResponse&gt; getCart(@AuthenticationPrincipal UserPrincipal principal,
+                                                 @CookieValue(name = &quot;${app.cart-token.cookie-name}&quot;, required = false) String cartToken) {
+<span class="fc" id="L31">        CartResponse result = cartFacade.getCart(principal, cartToken);</span>
+<span class="fc" id="L32">        return ResponseEntity.ok(result);</span>
+    }
+
+    @Operation(summary = &quot;Add a product to the cart&quot;,
+            description = &quot;Sets the cart_token cookie if this is the first item added by a guest&quot;)
+    @PostMapping(&quot;/items&quot;)
+    public ResponseEntity&lt;CartResponse&gt; addItem(@AuthenticationPrincipal UserPrincipal principal,
+                                                 @CookieValue(name = &quot;${app.cart-token.cookie-name}&quot;, required = false) String cartToken,
+                                                 @RequestBody @Valid AddCartItemRequest request) {
+<span class="fc" id="L41">        CartActionResult result = cartFacade.addItem(principal, cartToken, request);</span>
+
+<span class="fc" id="L43">        ResponseEntity.BodyBuilder response = ResponseEntity.ok();</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (result.cartTokenToSet() != null) {</span>
+<span class="fc" id="L45">            response.header(</span>
+                    HttpHeaders.SET_COOKIE,
+<span class="fc" id="L47">                    cartTokenCookieFactory.create(result.cartTokenToSet()).toString()</span>
+            );
+        }
+<span class="fc" id="L50">        return response.body(result.cart());</span>
+    }
+
+    @Operation(summary = &quot;Change the quantity of a product already in the cart&quot;)
+    @PatchMapping(&quot;/items/{productId}&quot;)
+    public ResponseEntity&lt;CartResponse&gt; updateItemQuantity(@AuthenticationPrincipal UserPrincipal principal,
+                                                            @CookieValue(name = &quot;${app.cart-token.cookie-name}&quot;, required = false) String cartToken,
+                                                            @PathVariable UUID productId,
+                                                            @RequestBody @Valid UpdateCartItemRequest request) {
+<span class="fc" id="L59">        CartResponse result = cartFacade.updateItemQuantity(principal, cartToken, productId, request);</span>
+<span class="fc" id="L60">        return ResponseEntity.ok(result);</span>
+    }
+
+    @Operation(summary = &quot;Remove a product from the cart&quot;)
+    @DeleteMapping(&quot;/items/{productId}&quot;)
+    public ResponseEntity&lt;CartResponse&gt; removeItem(@AuthenticationPrincipal UserPrincipal principal,
+                                                    @CookieValue(name = &quot;${app.cart-token.cookie-name}&quot;, required = false) String cartToken,
+                                                    @PathVariable UUID productId) {
+<span class="fc" id="L68">        CartResponse result = cartFacade.removeItem(principal, cartToken, productId);</span>
+<span class="fc" id="L69">        return ResponseEntity.ok(result);</span>
+    }
+
+    @Operation(summary = &quot;Clear the entire cart&quot;)
+    @DeleteMapping
+    public ResponseEntity&lt;Void&gt; clearCart(@AuthenticationPrincipal UserPrincipal principal,
+                                           @CookieValue(name = &quot;${app.cart-token.cookie-name}&quot;, required = false) String cartToken) {
+<span class="fc" id="L76">        cartFacade.clearCart(principal, cartToken);</span>
+<span class="fc" id="L77">        return ResponseEntity.noContent()</span>
+<span class="fc" id="L78">                .header(HttpHeaders.SET_COOKIE, cartTokenCookieFactory.clear().toString())</span>
+<span class="fc" id="L79">                .build();</span>
+    }
+
+    @Operation(summary = &quot;Merge the guest cart into the authenticated user's cart&quot;,
+            description = &quot;Call right after login if a cart_token cookie is present&quot;)
+    @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    @PostMapping(&quot;/merge&quot;)
+    public ResponseEntity&lt;CartMergeResponse&gt; mergeCart(@AuthenticationPrincipal UserPrincipal principal,
+                                                        @CookieValue(name = &quot;${app.cart-token.cookie-name}&quot;, required = false) String cartToken) {
+<span class="fc" id="L88">        CartMergeResponse result = cartMergeService.merge(cartToken, principal.user());</span>
+<span class="fc" id="L89">        return ResponseEntity.ok()</span>
+<span class="fc" id="L90">                .header(HttpHeaders.SET_COOKIE, cartTokenCookieFactory.clear().toString())</span>
+<span class="fc" id="L91">                .body(result);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

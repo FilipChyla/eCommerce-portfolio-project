@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GuestCart.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.cart.domain</a> &gt; <span class="el_source">GuestCart.java</span></div><h1>GuestCart.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.cart.domain;
+
+import io.github.filipchyla.shopapi.cart.exception.CartItemNotFoundException;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.*;
+
+@Getter
+@NoArgsConstructor
+public class GuestCart {
+    private final List&lt;GuestCartItem&gt; items = new ArrayList&lt;&gt;();
+
+    public List&lt;GuestCartItem&gt; getItems() {
+<span class="fc" id="L16">        return Collections.unmodifiableList(items);</span>
+    }
+
+    public GuestCartItem findItemByProductId(UUID productId) {
+<span class="fc" id="L20">        return items.stream()</span>
+<span class="fc" id="L21">                .filter(i -&gt; i.getProductId().equals(productId))</span>
+<span class="fc" id="L22">                .findFirst()</span>
+<span class="fc" id="L23">                .orElse(null);</span>
+    }
+
+    public int quantityIfAdded(UUID productId, int delta) {
+<span class="fc" id="L27">        GuestCartItem existing = findItemByProductId(productId);</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">        return (existing != null ? existing.getQuantity() : 0) + delta;</span>
+    }
+
+    public void addOrIncreaseItem(UUID productId, int quantity, BigDecimal unitPrice) {
+<span class="fc" id="L32">        GuestCartItem existing = findItemByProductId(productId);</span>
+<span class="fc bfc" id="L33" title="All 2 branches covered.">        if (existing != null) {</span>
+<span class="fc" id="L34">            existing.setQuantity(existing.getQuantity() + quantity);</span>
+        } else {
+<span class="fc" id="L36">            items.add(new GuestCartItem(productId, quantity, unitPrice));</span>
+        }
+<span class="fc" id="L38">    }</span>
+
+    public void removeItem(UUID productId) {
+<span class="fc" id="L41">        GuestCartItem item = findItemByProductId(productId);</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (item == null) {</span>
+<span class="fc" id="L43">            throw new CartItemNotFoundException(&quot;Product &quot; + productId + &quot; is not in the cart&quot;);</span>
+        }
+<span class="fc" id="L45">        items.remove(item);</span>
+<span class="fc" id="L46">    }</span>
+
+    public boolean removeStaleItems(Set&lt;UUID&gt; validProductIds) {
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        return items.removeIf(i -&gt; !validProductIds.contains(i.getProductId()));</span>
+    }
+
+    public int distinctItemCount() {
+<span class="fc" id="L53">        return items.size();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
