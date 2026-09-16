@@ -46,6 +46,13 @@ jobs:
       - name: Build and test with Maven
         run: ./mvnw -B clean verify
 
+      - name: Upload JaCoCo report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+
       - name: Test Report
         uses: actions/upload-artifact@v7
         if: always()
@@ -88,6 +95,17 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-history
+          keep_files: true
+
+      - name: Publish JaCoCo report to Pages
+        if: always() && github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: target/site/jacoco
+          destination_dir: coverage
+          keep_files: true
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
