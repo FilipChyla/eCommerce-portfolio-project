@@ -1,5 +1,6 @@
 package io.github.filipchyla.shopapi.cart.service;
 
+import io.github.filipchyla.shopapi.cart.AddItemOutcome;
 import io.github.filipchyla.shopapi.cart.dto.AddCartItemRequest;
 import io.github.filipchyla.shopapi.cart.dto.CartItemResponse;
 import io.github.filipchyla.shopapi.cart.dto.CartMergeResponse;
@@ -83,7 +84,7 @@ class CartMergeServiceTest {
                     null, List.of(itemResponse(p1, 2), itemResponse(p2, 1)), BigDecimal.valueOf(30));
 
             when(guestCartService.getCart(cartToken)).thenReturn(guestCart);
-            when(cartService.addItem(eq(user), any(AddCartItemRequest.class))).thenReturn(emptyResponse);
+            when(cartService.tryAddItem(eq(user), any(AddCartItemRequest.class))).thenReturn(new AddItemOutcome.Added(emptyResponse));
             when(cartService.getCart(user)).thenReturn(emptyResponse);
 
             // When
@@ -91,7 +92,7 @@ class CartMergeServiceTest {
 
             // Then
             assertThat(result.skippedItems()).isEmpty();
-            verify(cartService, times(2)).addItem(eq(user), any(AddCartItemRequest.class));
+            verify(cartService, times(2)).tryAddItem(eq(user), any(AddCartItemRequest.class));
             verify(guestCartService).clearCart(cartToken);
         }
 
@@ -102,14 +103,14 @@ class CartMergeServiceTest {
             CartResponse guestCart = new CartResponse(null, List.of(itemResponse(p1, 4)), BigDecimal.valueOf(40));
 
             when(guestCartService.getCart(cartToken)).thenReturn(guestCart);
-            when(cartService.addItem(eq(user), any(AddCartItemRequest.class))).thenReturn(emptyResponse);
+            when(cartService.tryAddItem(eq(user), any(AddCartItemRequest.class))).thenReturn(new AddItemOutcome.Added(emptyResponse));
             when(cartService.getCart(user)).thenReturn(emptyResponse);
 
             // When
             cartMergeService.merge(cartToken, user);
 
             // Then
-            verify(cartService).addItem(user, new AddCartItemRequest(p1, 4));
+            verify(cartService).tryAddItem(user, new AddCartItemRequest(p1, 4));
         }
 
         @Test
@@ -138,8 +139,8 @@ class CartMergeServiceTest {
             CartResponse guestCart = new CartResponse(null, List.of(itemResponse(p1, 25)), BigDecimal.valueOf(250));
 
             when(guestCartService.getCart(cartToken)).thenReturn(guestCart);
-            when(cartService.addItem(eq(user), any(AddCartItemRequest.class)))
-                    .thenThrow(new CartItemLimitExceededException("Limit exceeded"));
+            when(cartService.tryAddItem(eq(user), any(AddCartItemRequest.class)))
+                    .thenReturn(new AddItemOutcome.Rejected(new CartItemLimitExceededException("Limit exceeded")));
             when(cartService.getCart(user)).thenReturn(emptyResponse);
 
             // When
@@ -158,8 +159,8 @@ class CartMergeServiceTest {
             CartResponse guestCart = new CartResponse(null, List.of(itemResponse(p1, 5)), BigDecimal.valueOf(50));
 
             when(guestCartService.getCart(cartToken)).thenReturn(guestCart);
-            when(cartService.addItem(eq(user), any(AddCartItemRequest.class)))
-                    .thenThrow(new InsufficientStockException("Not enough stock"));
+            when(cartService.tryAddItem(eq(user), any(AddCartItemRequest.class)))
+                    .thenReturn(new AddItemOutcome.Rejected(new InsufficientStockException("Not enough stock")));
             when(cartService.getCart(user)).thenReturn(emptyResponse);
 
             // When
@@ -178,8 +179,8 @@ class CartMergeServiceTest {
             CartResponse guestCart = new CartResponse(null, List.of(itemResponse(p1, 1)), BigDecimal.TEN);
 
             when(guestCartService.getCart(cartToken)).thenReturn(guestCart);
-            when(cartService.addItem(eq(user), any(AddCartItemRequest.class)))
-                    .thenThrow(new ProductNotFoundException("Product deleted"));
+            when(cartService.tryAddItem(eq(user), any(AddCartItemRequest.class)))
+                    .thenReturn(new AddItemOutcome.Rejected(new ProductNotFoundException("Product deleted")));
             when(cartService.getCart(user)).thenReturn(emptyResponse);
 
             // When
@@ -200,9 +201,10 @@ class CartMergeServiceTest {
                     null, List.of(itemResponse(ok, 1), itemResponse(failing, 5)), BigDecimal.valueOf(60));
 
             when(guestCartService.getCart(cartToken)).thenReturn(guestCart);
-            when(cartService.addItem(user, new AddCartItemRequest(ok, 1))).thenReturn(emptyResponse);
-            when(cartService.addItem(user, new AddCartItemRequest(failing, 5)))
-                    .thenThrow(new InsufficientStockException("Not enough stock"));
+            when(cartService.tryAddItem(user, new AddCartItemRequest(ok, 1)))
+                    .thenReturn(new AddItemOutcome.Added(emptyResponse));
+            when(cartService.tryAddItem(user, new AddCartItemRequest(failing, 5)))
+                    .thenReturn(new AddItemOutcome.Rejected(new InsufficientStockException("Not enough stock")));
             when(cartService.getCart(user)).thenReturn(emptyResponse);
 
             // When
@@ -211,7 +213,7 @@ class CartMergeServiceTest {
             // Then
             assertThat(result.skippedItems()).hasSize(1);
             assertThat(result.skippedItems().getFirst().reason()).contains("Not enough stock");
-            verify(cartService).addItem(user, new AddCartItemRequest(ok, 1));
+            verify(cartService).tryAddItem(user, new AddCartItemRequest(ok, 1));
             verify(guestCartService).clearCart(cartToken);
         }
     }

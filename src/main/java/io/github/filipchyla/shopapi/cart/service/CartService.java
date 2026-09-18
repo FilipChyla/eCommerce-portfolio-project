@@ -1,5 +1,6 @@
 package io.github.filipchyla.shopapi.cart.service;
 
+import io.github.filipchyla.shopapi.cart.AddItemOutcome;
 import io.github.filipchyla.shopapi.cart.CartLimitPolicy;
 import io.github.filipchyla.shopapi.cart.CartRepository;
 import io.github.filipchyla.shopapi.cart.domain.Cart;
@@ -7,7 +8,9 @@ import io.github.filipchyla.shopapi.cart.domain.CartItem;
 import io.github.filipchyla.shopapi.cart.dto.AddCartItemRequest;
 import io.github.filipchyla.shopapi.cart.dto.CartResponse;
 import io.github.filipchyla.shopapi.cart.dto.UpdateCartItemRequest;
+import io.github.filipchyla.shopapi.cart.exception.CartItemLimitExceededException;
 import io.github.filipchyla.shopapi.cart.exception.CartItemNotFoundException;
+import io.github.filipchyla.shopapi.cart.exception.InsufficientStockException;
 import io.github.filipchyla.shopapi.cart.mapper.CartMapper;
 import io.github.filipchyla.shopapi.product.Product;
 import io.github.filipchyla.shopapi.product.ProductService;
@@ -33,25 +36,35 @@ public class CartService {
     }
 
     @Transactional
-    public CartResponse addItem(User user, AddCartItemRequest request) {
+    public AddItemOutcome tryAddItem(User user, AddCartItemRequest request) {
         Cart cart = getOrCreateCart(user);
 
-        Product product = productService.findActiveProductById(request.productId())
-                .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + request.productId()));
+        Product product = productService.findActiveProductById(request.productId()).orElse(null);
+
+        if (product == null) {
+            return new AddItemOutcome.Rejected(new ProductNotFoundException("Product not found with id: " + request.productId()));
+        }
 
         boolean isNew = cart.findItemByProductId(product.getId()) == null;
-
         int requestedQuantity = cart.quantityIfAdded(product.getId(), request.quantity());
 
-        cartLimitPolicy.validateAddition(
-                product,
-                requestedQuantity,
-                isNew,
-                cart.distinctItemCount());
+        try {
+            cartLimitPolicy.validateAddition(product, requestedQuantity, isNew, cart.distinctItemCount());
+        } catch (CartItemLimitExceededException | InsufficientStockException e) {
+            return new AddItemOutcome.Rejected(e);
+        }
 
         cart.addOrIncreaseItem(product, request.quantity());
 
-        return cartMapper.toCartResponse(cart);
+        return new AddItemOutcome.Added(cartMapper.toCartResponse(cart));
+    }
+
+    @Transactional
+    public CartResponse addItem(User user, AddCartItemRequest request) {
+        return switch (tryAddItem(user, request)) {
+            case AddItemOutcome.Added(CartResponse cart) -> cart;
+            case AddItemOutcome.Rejected(RuntimeException cause) -> throw cause;
+        };
     }
 
     @Transactional
