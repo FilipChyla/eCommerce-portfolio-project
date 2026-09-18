@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CartService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shop-api</a> &gt; <a href="index.source.html" class="el_package">io.github.filipchyla.shopapi.cart.service</a> &gt; <span class="el_source">CartService.java</span></div><h1>CartService.java</h1><pre class="source lang-java linenums">package io.github.filipchyla.shopapi.cart.service;
 
+import io.github.filipchyla.shopapi.cart.AddItemOutcome;
 import io.github.filipchyla.shopapi.cart.CartLimitPolicy;
 import io.github.filipchyla.shopapi.cart.CartRepository;
 import io.github.filipchyla.shopapi.cart.domain.Cart;
@@ -7,7 +8,9 @@ import io.github.filipchyla.shopapi.cart.domain.CartItem;
 import io.github.filipchyla.shopapi.cart.dto.AddCartItemRequest;
 import io.github.filipchyla.shopapi.cart.dto.CartResponse;
 import io.github.filipchyla.shopapi.cart.dto.UpdateCartItemRequest;
+import io.github.filipchyla.shopapi.cart.exception.CartItemLimitExceededException;
 import io.github.filipchyla.shopapi.cart.exception.CartItemNotFoundException;
+import io.github.filipchyla.shopapi.cart.exception.InsufficientStockException;
 import io.github.filipchyla.shopapi.cart.mapper.CartMapper;
 import io.github.filipchyla.shopapi.product.Product;
 import io.github.filipchyla.shopapi.product.ProductService;
@@ -29,66 +32,76 @@ public class CartService {
 
     @Transactional
     public CartResponse getCart(User user) {
-<span class="fc" id="L32">        return cartMapper.toCartResponse(getOrCreateCart(user));</span>
+<span class="fc" id="L35">        return cartMapper.toCartResponse(getOrCreateCart(user));</span>
+    }
+
+    @Transactional
+    public AddItemOutcome tryAddItem(User user, AddCartItemRequest request) {
+<span class="fc" id="L40">        Cart cart = getOrCreateCart(user);</span>
+
+<span class="fc" id="L42">        Product product = productService.findActiveProductById(request.productId()).orElse(null);</span>
+
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (product == null) {</span>
+<span class="fc" id="L45">            return new AddItemOutcome.Rejected(new ProductNotFoundException(&quot;Product not found with id: &quot; + request.productId()));</span>
+        }
+
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        boolean isNew = cart.findItemByProductId(product.getId()) == null;</span>
+<span class="fc" id="L49">        int requestedQuantity = cart.quantityIfAdded(product.getId(), request.quantity());</span>
+
+        try {
+<span class="fc" id="L52">            cartLimitPolicy.validateAddition(product, requestedQuantity, isNew, cart.distinctItemCount());</span>
+<span class="fc" id="L53">        } catch (CartItemLimitExceededException | InsufficientStockException e) {</span>
+<span class="fc" id="L54">            return new AddItemOutcome.Rejected(e);</span>
+<span class="fc" id="L55">        }</span>
+
+<span class="fc" id="L57">        cart.addOrIncreaseItem(product, request.quantity());</span>
+
+<span class="fc" id="L59">        return new AddItemOutcome.Added(cartMapper.toCartResponse(cart));</span>
     }
 
     @Transactional
     public CartResponse addItem(User user, AddCartItemRequest request) {
-<span class="fc" id="L37">        Cart cart = getOrCreateCart(user);</span>
-
-<span class="fc" id="L39">        Product product = productService.findActiveProductById(request.productId())</span>
-<span class="fc" id="L40">                .orElseThrow(() -&gt; new ProductNotFoundException(&quot;Product not found with id: &quot; + request.productId()));</span>
-
-<span class="fc bfc" id="L42" title="All 2 branches covered.">        boolean isNew = cart.findItemByProductId(product.getId()) == null;</span>
-
-<span class="fc" id="L44">        int requestedQuantity = cart.quantityIfAdded(product.getId(), request.quantity());</span>
-
-<span class="fc" id="L46">        cartLimitPolicy.validateAddition(</span>
-                product,
-                requestedQuantity,
-                isNew,
-<span class="fc" id="L50">                cart.distinctItemCount());</span>
-
-<span class="fc" id="L52">        cart.addOrIncreaseItem(product, request.quantity());</span>
-
-<span class="fc" id="L54">        return cartMapper.toCartResponse(cart);</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        return switch (tryAddItem(user, request)) {</span>
+<span class="fc" id="L65">            case AddItemOutcome.Added(CartResponse cart) -&gt; cart;</span>
+<span class="fc" id="L66">            case AddItemOutcome.Rejected(RuntimeException cause) -&gt; throw cause;</span>
+        };
     }
 
     @Transactional
     public CartResponse updateItemQuantity(User user, UUID productId, UpdateCartItemRequest request) {
-<span class="fc" id="L59">        Cart cart = getOrCreateCart(user);</span>
-<span class="fc" id="L60">        CartItem item = cart.findItemByProductId(productId);</span>
+<span class="fc" id="L72">        Cart cart = getOrCreateCart(user);</span>
+<span class="fc" id="L73">        CartItem item = cart.findItemByProductId(productId);</span>
 
-<span class="fc bfc" id="L62" title="All 2 branches covered.">        if (item == null) {</span>
-<span class="fc" id="L63">            throw new CartItemNotFoundException(&quot;Product &quot; + productId + &quot; is not in the cart&quot;);</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (item == null) {</span>
+<span class="fc" id="L76">            throw new CartItemNotFoundException(&quot;Product &quot; + productId + &quot; is not in the cart&quot;);</span>
         }
 
-<span class="fc" id="L66">        Product product = item.getProduct();</span>
+<span class="fc" id="L79">        Product product = item.getProduct();</span>
 
-<span class="fc" id="L68">        cartLimitPolicy.validateQuantityUpdate(product, request.quantity());</span>
+<span class="fc" id="L81">        cartLimitPolicy.validateQuantityUpdate(product, request.quantity());</span>
 
-<span class="fc" id="L70">        cart.updateItemQuantity(item, request.quantity());</span>
-<span class="fc" id="L71">        return cartMapper.toCartResponse(cart);</span>
+<span class="fc" id="L83">        cart.updateItemQuantity(item, request.quantity());</span>
+<span class="fc" id="L84">        return cartMapper.toCartResponse(cart);</span>
     }
 
     @Transactional
     public CartResponse removeItem(User user, UUID productId) {
-<span class="fc" id="L76">        Cart cart = getOrCreateCart(user);</span>
-<span class="fc" id="L77">        cart.removeItem(productId);</span>
-<span class="fc" id="L78">        return cartMapper.toCartResponse(cart);</span>
+<span class="fc" id="L89">        Cart cart = getOrCreateCart(user);</span>
+<span class="fc" id="L90">        cart.removeItem(productId);</span>
+<span class="fc" id="L91">        return cartMapper.toCartResponse(cart);</span>
     }
 
     @Transactional
     public void clearCart(User user) {
-<span class="fc" id="L83">        getOrCreateCart(user).clear();</span>
-<span class="fc" id="L84">    }</span>
+<span class="fc" id="L96">        getOrCreateCart(user).clear();</span>
+<span class="fc" id="L97">    }</span>
 
     private Cart getOrCreateCart(User user) {
-<span class="fc" id="L87">        return cartRepository.findByUserId(user.getId())</span>
-<span class="fc" id="L88">                .orElseGet(() -&gt; {</span>
-<span class="fc" id="L89">                    Cart cart = new Cart();</span>
-<span class="fc" id="L90">                    cart.setUser(user);</span>
-<span class="fc" id="L91">                    return cartRepository.save(cart);</span>
+<span class="fc" id="L100">        return cartRepository.findByUserId(user.getId())</span>
+<span class="fc" id="L101">                .orElseGet(() -&gt; {</span>
+<span class="fc" id="L102">                    Cart cart = new Cart();</span>
+<span class="fc" id="L103">                    cart.setUser(user);</span>
+<span class="fc" id="L104">                    return cartRepository.save(cart);</span>
                 });
     }
 }

@@ -17,6 +17,8 @@ shop-api,io.github.filipchyla.shopapi.role,RoleNotFoundException,4,0,0,0,2,0,1,0
 shop-api,io.github.filipchyla.shopapi.cart,CartFacade,0,159,0,8,0,21,0,19,0,15
 shop-api,io.github.filipchyla.shopapi.cart,CartLimitPolicy,0,66,0,8,0,19,0,10,0,6
 shop-api,io.github.filipchyla.shopapi.cart,CartController,0,104,0,2,0,20,0,7,0,6
+shop-api,io.github.filipchyla.shopapi.cart,AddItemOutcome.Added,0,6,0,0,0,1,0,1,0,1
+shop-api,io.github.filipchyla.shopapi.cart,AddItemOutcome.Rejected,0,6,0,0,0,1,0,1,0,1
 shop-api,io.github.filipchyla.shopapi.cart,CartTokenCookieFactory,2,50,1,1,0,20,1,3,0,3
 shop-api,io.github.filipchyla.shopapi.cart,PriceCalculator,0,23,0,2,0,5,0,4,0,3
 shop-api,io.github.filipchyla.shopapi.auth.exception,IncorrectPasswordException,0,4,0,0,0,2,0,1,0,1
@@ -40,9 +42,9 @@ shop-api,io.github.filipchyla.shopapi.product.category.exception,CircularCategor
 shop-api,io.github.filipchyla.shopapi.config,SecurityConfiguration,0,217,0,0,0,37,0,9,0,9
 shop-api,io.github.filipchyla.shopapi.config,RedisConfig,0,86,0,0,0,26,0,4,0,4
 shop-api,io.github.filipchyla.shopapi.cart.mapper,GuestCartMapper,2,34,1,1,1,7,1,2,0,2
-shop-api,io.github.filipchyla.shopapi.cart.service,CartMergeService,0,71,0,4,0,12,0,3,0,1
+shop-api,io.github.filipchyla.shopapi.cart.service,CartMergeService,0,80,0,6,0,11,0,4,0,1
 shop-api,io.github.filipchyla.shopapi.cart.service,GuestCartService,7,284,0,14,2,56,0,19,0,12
-shop-api,io.github.filipchyla.shopapi.cart.service,CartService,0,144,0,4,0,28,0,10,0,8
+shop-api,io.github.filipchyla.shopapi.cart.service,CartService,0,193,0,8,0,34,0,12,0,8
 shop-api,io.github.filipchyla.shopapi.auth.service,JwtService,0,66,0,0,0,23,0,6,0,6
 shop-api,io.github.filipchyla.shopapi.auth.service,RefreshTokenService,14,475,4,18,4,95,4,28,0,21
 shop-api,io.github.filipchyla.shopapi.auth.service,AuthenticationService,0,62,0,2,0,14,0,4,0,3
